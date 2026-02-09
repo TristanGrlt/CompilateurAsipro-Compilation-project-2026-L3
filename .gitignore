@@ -1,0 +1,14 @@
+._*
+compil
+compil.gv
+compil.output
+compil.tab.c
+compil.tab.h
+compil.tab.o
+gmon.out
+lex.yy.c
+lex.yy.h
+lex.yy.o
+test.asm
+test.sipro
+*.pdf
