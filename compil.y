@@ -27,9 +27,14 @@
 %type<type> LALGO
 %type<type> LINSTRU
 %type<type> LPARAM
-%start EXPR
+%start EXPR         // A remplacer par START
 
 %%
+//---- [ALGO        ] --------------------------------------------------------//
+//----------------------------------------------------------------------------//
+START:
+  ALGO | CALL
+
 //---- [ALGO        ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
 ALGO:
@@ -70,10 +75,10 @@ LOOP_DOWHILE:
 //---- [COND        ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
 COND :
-  IF '{' EXPR '}'   
-    LINSTRU 
+  IF '{' EXPR '}'
+    LINSTRU
   NEXT_IF FI;
-    
+
 NEXT_IF:
   ELSE LINSTRU | ;
 
@@ -87,7 +92,7 @@ EXEC_CALL :
 EXPR:
   EXPR '+' EXPR   {
     if ($1 == INT_T && $3 == INT_T) {
-      printf(";;;;;;;;;;  ADDITION  ;;;;;;;;;;\n");
+      _("ADDITION")
       pop(bx);
       pop(ax);
       add(ax, bx);
@@ -99,7 +104,7 @@ EXPR:
   }
 | EXPR '-' EXPR   {
     if ($1 == INT_T && $3 == INT_T) {
-      printf(";;;;;;;;;;  SOUSTRACTION  ;;;;;;;;;;\n");
+      _("SOUSTRACTION")
       pop(bx);
       pop(ax);
       sub(ax, bx);
@@ -111,7 +116,7 @@ EXPR:
   }
 | EXPR '*' EXPR   {
     if ($1 == INT_T && $3 == INT_T) {
-      printf(";;;;;;;;;;  MULTIPLICATION  ;;;;;;;;;;\n");
+      _("MULTIPLICATION")
       pop(bx);
       pop(ax);
       mul(ax, bx);
@@ -123,7 +128,7 @@ EXPR:
   }
 | EXPR '/' EXPR   {
     if ($1 == INT_T && $3 == INT_T) {
-      printf(";;;;;;;;;;  DIVISION  ;;;;;;;;;;\n");
+      _("DIVISION")
       pop(bx);
       pop(ax);
       const(cx, "err0");
@@ -225,7 +230,7 @@ int main() {
   printf("\tsub sp,ax\n");
 
   yyparse();
-  
+
   printf(";;;;;;;;;;  AFFICHAGE  ;;;;;;;;;;\n");
   printf("\tcp ax,sp\n");
   printf("\tcallprintfd ax\n");
