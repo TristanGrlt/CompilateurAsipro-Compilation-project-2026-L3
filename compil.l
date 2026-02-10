@@ -13,14 +13,19 @@
 %%
 
 "\begin{algo}"          {return BEGIN_ALGO;}
+"\end{algo}"            {return END_ALGO;}
+
+"\SET"                  {return SET;}
+
 "\IF"                   {return IF;}
 "\ELSE"                 {return ELSE;}
-"\SET"                  {return SET;}
-"\DOFORI"               {return FOR;}
-"\OD"                   {return ENDFOR;}
-"\RETURN"               {return RETURN;}
-"\end{algo}"            {return ENDALGO;}
+"\FI"                   {return FI;}
+
 "\DOWHILE"              {return DOWHILE;}
+"\DOFORI"               {return FORI;}
+"\OD"                   {return OD;}
+
+"\RETURN"               {return RETURN;}
 "\CALL"                 {return CALL;}
 
 [1-9][0-9]*             {string_to_int(&yylval.integer, yytext); return INT;}

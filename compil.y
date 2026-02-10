@@ -15,9 +15,9 @@
   char *string;
 }
 %token<integer> INT
-%token<integer> BOOL
+%token<integer> TRUE FALSE
 %token<string> ID
-%token TRUE FALSE CALL DOWHILE ENDALGO RETURN ENDFOR FOR SET IF ELSE FI BEGIN_ALGO
+%token BEGIN_ALGO END_ALGO SET IF ELSE FI DOWHILE FORI OD RETURN CALL LEQ QEQ
 %left '='
 %left '<' '>' LEQ QEQ
 %left '+' '-'
@@ -27,13 +27,15 @@
 %type<type> LALGO
 %type<type> LINSTRU
 %type<type> LPARAM
-%start LALGO
+%start EXPR
 
 %%
 //---- [ALGO        ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
 ALGO:
-  BEGIN_ALGO;
+  BEGIN_ALGO '{' ID '}' '{' LPARAM '}'
+    LINSTRU
+  END_ALGO;
 LALGO:
   LALGO ALGO | ALGO;
 
@@ -42,7 +44,7 @@ LALGO:
 LINSTRU:
   LINSTRU INSTRU | INSTRU;
 INSTRU:
-  COND | BOUCLE | SET | RETURN
+  COND | LOOP_FOR_I | SET | RETURN
 
 //---- [PARAM       ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
@@ -51,12 +53,19 @@ PARAM:
 LPARAM:
   LPARAM ',' PARAM | PARAM;
 
-//---- [BOULCE      ] --------------------------------------------------------//
+//---- [BOULCE FORI ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
-BOUCLE:
-  FOR '{' ID '}' '{' EXPR '}' '{' EXPR '}'
+LOOP_FOR_I:
+  FORI '{' ID '}' '{' EXPR '}' '{' EXPR '}'
     LINSTRU
-  ENDFOR;
+  OD;
+
+//---- [BOULCE FORI ] --------------------------------------------------------//
+//----------------------------------------------------------------------------//
+LOOP_DOWHILE:
+  DOWHILE '{' EXPR '}'
+    LINSTRU
+  OD;
 
 //---- [COND        ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
@@ -67,6 +76,11 @@ COND :
     
 NEXT_IF:
   ELSE LINSTRU | ;
+
+//---- [CALL       ] --------------------------------------------------------//
+//----------------------------------------------------------------------------//
+EXEC_CALL :
+  CALL '{' ID '}' '{' LPARAM '}'
 
 //---- [EXPR        ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
