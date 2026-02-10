@@ -17,9 +17,9 @@
 %token<integer> INT
 %token<integer> TRUE FALSE
 %token<string> ID
-%token BEGIN_ALGO END_ALGO SET IF ELSE FI DOWHILE FORI OD RETURN CALL LEQ QEQ
+%token BEGIN_ALGO END_ALGO SET IF ELSE FI DOWHILE FORI OD RETURN CALL LEQ GEQ
 %left '='
-%left '<' '>' LEQ QEQ
+%left '<' '>' LEQ GEQ
 %left '+' '-'
 %left '*' '/'
 
@@ -141,8 +141,7 @@ EXPR:
 }
 | EXPR '>' EXPR   {
     if ($1 == INT_T && $3 == INT_T) {
-      //code asm
-      printf("Supérieur\n");
+      asm_gt();
       $$ = BOOL_T;
     } else {
       yyerror("Supérieur uniquement entre entiers");
@@ -150,17 +149,15 @@ EXPR:
 }
 | EXPR LEQ EXPR   { 
     if ($1 == INT_T && $3 == INT_T) {
-      //code asm
-      printf("Inférieur ou égal\n");
+      asm_leq();
       $$ = BOOL_T;
     } else {
       yyerror("Inférieur ou égale uniquement entre entiers");
     }
 }
-| EXPR QEQ EXPR   {
+| EXPR GEQ EXPR   {
     if ($1 == INT_T && $3 == INT_T) {
-      //code asm
-      printf("Supérieur ou égal\n");
+      asm_geq();
       $$ = BOOL_T;
     } else {
       yyerror("Supérieur ou égale uniquement entre entiers");
@@ -168,8 +165,7 @@ EXPR:
 }
 | EXPR '=' EXPR   {
     if (($1 == $3 )) {
-      //code asm
-      printf("Égal\n");
+      asm_eq();
       $$ = BOOL_T;
     } else {
       yyerror("Égalité uniquement entre deux entiers ou deux booléen");

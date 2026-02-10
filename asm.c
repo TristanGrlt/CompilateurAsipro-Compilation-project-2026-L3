@@ -59,9 +59,85 @@ void asm_lt(void) {
   jmpc(cx);
   const_int(ax, 0);
   const_string(dx, end_lt);
-  jmpc(dx);
+  jmp(dx);
   label(is_lt);
   const_int(ax, 1);
   label(end_lt);
+  push(ax);
+}
+
+void asm_gt(void) {
+  _("GT");
+  char *is_gt = get_label("is_gt");
+  char *end_gt = get_label("end_gt");
+  pop(ax);
+  pop(bx);
+  const_string(cx, is_gt);
+  sless(ax, bx);
+  jmpc(cx);
+  const_int(ax, 0);
+  const_string(dx, end_gt);
+  jmp(dx);
+  label(is_gt);
+  const_int(ax, 1);
+  label(end_gt);
+  push(ax);
+}
+
+void asm_geq(void) {
+  _("GEQ");
+  char *is_geq = get_label("is_geq");
+  char *end_geq = get_label("end_geq");
+  pop(ax);
+  pop(bx);
+  const_string(cx, is_geq);
+  cmp(ax, bx);
+  jmpc(cx);
+  sless(ax, bx);
+  jmpc(cx);
+  const_int(ax, 0);
+  const_string(dx, end_geq);
+  jmp(dx);
+  label(is_geq);
+  const_int(ax, 1);
+  label(end_geq);
+  push(ax);
+}
+
+void asm_leq(void) {
+  _("LEQ");
+  char *is_leq = get_label("is_leq");
+  char *end_leq = get_label("end_leq");
+  pop(bx);
+  pop(ax);
+  const_string(cx, is_leq);
+  cmp(ax, bx);
+  jmpc(cx);
+  sless(ax, bx);
+  jmpc(cx);
+  const_int(ax, 0);
+  const_string(dx, end_leq);
+  jmp(dx);
+  label(is_leq);
+  const_int(ax, 1);
+  label(end_leq);
+  push(ax);
+}
+
+void asm_eq(void) {
+  _("EQ");
+  char *is_eq = get_label("is_eq");
+  char *end_eq = get_label("end_eq");
+  pop(bx);
+  pop(ax);
+  const_string(cx, is_eq);
+  cmp(ax, bx);
+  jmpc(cx);
+  const_int(ax, 0);
+  const_string(dx, end_eq);
+  jmp(dx);
+  label(is_eq);
+  const_int(ax, 1);
+  label(end_eq);
   push(ax);
 }

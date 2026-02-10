@@ -33,7 +33,7 @@
 "("|")"                 {return yytext[0];}
 "<"|">"|"="             {return yytext[0];}
 "<="                    {return LEQ;}
-">="                    {return QEQ;}
+">="                    {return GEQ;}
 
 "true"                  {return TRUE;}
 "false"                 {return FALSE;}
