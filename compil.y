@@ -4,7 +4,7 @@
   #include <string.h>
   #include <limits.h>
   #include "utils.h"
-  #include "asm.h"
+  #include "asm.c"
   int yylex();
   void yyerror (char const *);
 %}
@@ -92,11 +92,7 @@ EXEC_CALL :
 EXPR:
   EXPR '+' EXPR   {
     if ($1 == INT_T && $3 == INT_T) {
-      _("ADDITION")
-      pop(bx);
-      pop(ax);
-      add(ax, bx);
-      push(ax);
+      asm_add();
       $$ = INT_T;
     } else {
       yyerror("Addition uniquement entre entiers");
@@ -104,11 +100,7 @@ EXPR:
   }
 | EXPR '-' EXPR   {
     if ($1 == INT_T && $3 == INT_T) {
-      _("SOUSTRACTION")
-      pop(bx);
-      pop(ax);
-      sub(ax, bx);
-      push(ax);
+      asm_sub();
       $$ = INT_T;
     } else {
       yyerror("Soustraction uniquement entre entiers");
@@ -116,11 +108,7 @@ EXPR:
   }
 | EXPR '*' EXPR   {
     if ($1 == INT_T && $3 == INT_T) {
-      _("MULTIPLICATION")
-      pop(bx);
-      pop(ax);
-      mul(ax, bx);
-      push(ax);
+      asm_mul();
       $$ = INT_T;
     } else {
       yyerror("Multiplication uniquement entre entiers");
@@ -128,37 +116,26 @@ EXPR:
   }
 | EXPR '/' EXPR   {
     if ($1 == INT_T && $3 == INT_T) {
-      _("DIVISION")
-      pop(bx);
-      pop(ax);
-      const(cx, "err0");
-      div(ax, bx);
-      jmpe(cx);
-      push(ax);
+      asm_div();
       $$ = INT_T;
     } else {
       yyerror("Division uniquement entre entiers");
     }
   }
 | INT             {
-    printf(";;;;;;;;;;  SAUVGARDE ENTIER %d  ;;;;;;;;;;\n", $1);
-    printf("\tconst ax,%d\n", $1);
-    printf("\tpush ax\n");
+    _("ENTIER");
+    const_int(ax, $1);
+    push(ax);
     $$ = INT_T;
   }
 | '(' EXPR ')' {
-    // printf("Expression parenthésée\n");
     $$ = $2;
 }
 | EXPR '<' EXPR   {
     if ($1 == INT_T && $3 == INT_T) {
-      printf(";;;;;;;;;;  LESS THAN  ;;;;;;;;;;\n");
-      printf("\tpop bx\n");
-      printf("\tpop ax\n");
-      printf("\tsless ax,bx\n");
-      printf("\tpush ax\n");
+      asm_lt();
       $$ = BOOL_T;
-    }  else {
+    }  else { 
       yyerror("Inférieur uniquement entre entiers");
     }
 }
@@ -171,7 +148,7 @@ EXPR:
       yyerror("Supérieur uniquement entre entiers");
     }
 }
-| EXPR LEQ EXPR   {
+| EXPR LEQ EXPR   { 
     if ($1 == INT_T && $3 == INT_T) {
       //code asm
       printf("Inférieur ou égal\n");
@@ -226,7 +203,7 @@ int main() {
   printf(":main\n");
   printf("\tconst bp,stack\n");
   printf("\tconst sp,stack\n");
-  printf("\tconst ax,2\n");
+  printf("\tconst ax,2\n"); 
   printf("\tsub sp,ax\n");
 
   yyparse();
