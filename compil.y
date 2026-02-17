@@ -29,7 +29,7 @@
 %type<type> LALGO
 %type<type> LINSTRU
 %type<type> LPARAM
-%start EXPR         // A remplacer par START
+%start START         // A remplacer par START
 
 %%
 //---- [ALGO        ] --------------------------------------------------------//
@@ -40,7 +40,9 @@ START:
 //---- [ALGO        ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
 ALGO:
-  BEGIN_ALGO '{' ID '}' '{' LPARAM '}'
+  BEGIN_ALGO '{' ID '}' {
+    symboletable_add($3);
+  } '{' LPARAM '}'
     LINSTRU
   END_ALGO;
 LALGO:
@@ -49,7 +51,7 @@ LALGO:
 //---- [INSTRU      ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
 LINSTRU:
-  LINSTRU INSTRU | INSTRU;
+  LINSTRU INSTRU | INSTRU | ;
 INSTRU:
   COND | LOOP_FOR_I | SET | RETURN
 
@@ -58,7 +60,7 @@ INSTRU:
 PARAM:
   ID;
 LPARAM:
-  LPARAM ',' PARAM | PARAM;
+  LPARAM ',' PARAM | PARAM | ;
 
 //---- [BOULCE FORI ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//

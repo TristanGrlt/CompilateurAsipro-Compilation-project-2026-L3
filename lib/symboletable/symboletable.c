@@ -1,5 +1,7 @@
 #include "symboletable.h"
+#include "../../utils.h"
 #include "hashtable.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -15,7 +17,44 @@ size_t str_hashfun(const char *s) {
   return h;
 }
 
-void symboletable_init(void) {
+void *symboletable_init(void) {
   symboletable = hashtable_empty((int (*)(const void *, const void *))strcmp,
                                  (size_t(*)(const void *))str_hashfun, 1.0);
+  return symboletable;
+}
+
+void *symboletable_add(const char *id) {
+  if (symboletable == nullptr) {
+    return nullptr;
+  }
+
+  printf(";symboletable_add : %s\n", id);
+
+  info_algo *algo = malloc(sizeof(*algo));
+  if (algo == nullptr) {
+    return nullptr;
+  }
+  algo->id = id;
+  algo->type = UNDEF;
+  algo->nb_param = 0;
+  algo->nb_varloc = 0;
+  algo->param = hashtable_empty((int (*)(const void *, const void *))strcmp,
+                                (size_t(*)(const void *))str_hashfun, 1.0);
+  algo->varloc = hashtable_empty((int (*)(const void *, const void *))strcmp,
+                                 (size_t(*)(const void *))str_hashfun, 1.0);
+  if (algo->param == nullptr || algo->varloc == nullptr) {
+    free(algo);
+    return nullptr;
+  }
+  if (hashtable_add(symboletable, id, algo) == nullptr) {
+    free(algo);
+    return nullptr;
+  }
+  return algo;
+}
+
+void symboletable_dispose(void) {
+  if (symboletable != nullptr) {
+    hashtable_dispose(&symboletable);
+  }
 }
