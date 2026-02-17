@@ -1,6 +1,7 @@
 #ifndef SYMBOLETABLE__H
 #define SYMBOLETABLE__H
 
+#include "../../utils.h"
 #include "hashtable.h"
 
 // symboletable : initialise la table de symboles. Doit être appelée avant toute

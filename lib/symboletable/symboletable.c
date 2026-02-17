@@ -1,6 +1,4 @@
 #include "symboletable.h"
-#include "../../utils.h"
-#include "hashtable.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -85,5 +83,6 @@ void *symboletable_add_param(const char *id, type_s type) {
     free(var);
     return nullptr;
   }
+  printf(";symboletable_add_param : %s type : %d\n", id, type);
   return var;
 }

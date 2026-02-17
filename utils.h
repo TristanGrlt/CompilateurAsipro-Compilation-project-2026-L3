@@ -1,3 +1,6 @@
+#ifndef UTILS__H
+#define UTILS__H
+
 #include "hashtable.h"
 
 typedef enum {
@@ -23,6 +26,8 @@ typedef struct {
   int nb; // numéro d'arrivé de la variable dans l'algorithme celon sont type
   type_s type; // type de la variable
 } info_var;
+
+#endif
 
 //
 //
