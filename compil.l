@@ -12,31 +12,35 @@
 
 %%
 
-"\begin{algo}"          {return BEGIN_ALGO;}
-"\end{algo}"            {return END_ALGO;}
+"\\begin{algo}"          {return BEGIN_ALGO;}
+"\\end{algo}"            {return END_ALGO;}
 
-"\SET"                  {return SET;}
+"\\SET"                  {return SET;}
 
-"\IF"                   {return IF;}
-"\ELSE"                 {return ELSE;}
-"\FI"                   {return FI;}
+"\\IF"                   {return IF;}
+"\\ELSE"                 {return ELSE;}
+"\\FI"                   {return FI;}
 
-"\DOWHILE"              {return DOWHILE;}
-"\DOFORI"               {return FORI;}
-"\OD"                   {return OD;}
+"\\DOWHILE"              {return DOWHILE;}
+"\\DOFORI"               {return FORI;}
+"\\OD"                   {return OD;}
 
-"\RETURN"               {return RETURN;}
-"\CALL"                 {return CALL;}
+"\\RETURN"               {return RETURN;}
+"\\CALL"                 {return CALL;}
 
 [1-9][0-9]*             {string_to_int(&yylval.integer, yytext); return INT;}
 "+"|"-"|"*"|"/"         {return yytext[0];}
 "("|")"                 {return yytext[0];}
-"<"|">"|"="             {return yytext[0];}
+"{"|"}"                 {return yytext[0];}
+","|"="                 {return yytext[0];}
+"<"|">"                 {return yytext[0];}
 "<="                    {return LEQ;}
 ">="                    {return GEQ;}
 
 "true"                  {return TRUE;}
 "false"                 {return FALSE;}
+
+[a-zA-Z_][a-zA-Z0-9_]* {yytext_copy(&yylval.string, yytext); return ID;}
 
 [[:blank:]]             {}
 .                       {fprintf(stderr, "Bad character: %c\n", yytext[0]);
