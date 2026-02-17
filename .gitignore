@@ -12,3 +12,8 @@ lex.yy.o
 test.asm
 test.sipro
 *.pdf
+
+.vscode/
+build/
+exe
+*.o

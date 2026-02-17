@@ -19,11 +19,42 @@ typedef struct {
 // Ensemble des informations d'une variable qu'elle soit un paramètre ou une
 // variable locale
 typedef struct {
-  char *id;    // id unique de la variable
-  int nb;      // numéro d'arrivé de la variable dans l'algorithme
+  char *id; // id unique de la variable
+  int nb; // numéro d'arrivé de la variable dans l'algorithme celon sont type
   type_s type; // type de la variable
 } info_var;
 
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 // A ajouter dans le table de hashage
 // type de retour
 // id
