@@ -64,3 +64,26 @@ void symboletable_dispose(void) {
     hashtable_dispose(&symboletable);
   }
 }
+
+void *symboletable_add_param(const char *id, type_s type) {
+  if (current_algo == nullptr) {
+    return nullptr;
+  }
+  if (symboletable == nullptr) {
+    return nullptr;
+  }
+  info_var *var = malloc(sizeof(*var));
+  if (var == nullptr) {
+    return nullptr;
+  }
+  var->id = strdup(id);
+  var->nb = current_algo->nb_param++;
+  var->type = type;
+  void *r = hashtable_add(current_algo->param, var->id, var);
+  if (r != var) {
+    free(var->id);
+    free(var);
+    return nullptr;
+  }
+  return var;
+}
