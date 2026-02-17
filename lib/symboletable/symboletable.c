@@ -5,7 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-static hashtable *symboletable = nullptr;
+static hashtable *symboletable = nullptr; // table de symboles globale
+static info_algo *current_algo = nullptr; // algorithme en cours de construction
 
 // str_hashfun : l'une des fonctions de pré-hachage conseillées par Kernighan et
 // Pike pour les chaines de caractères.
@@ -46,7 +47,12 @@ void *symboletable_add(const char *id) {
     free(algo);
     return nullptr;
   }
-  if (hashtable_add(symboletable, id, algo) == nullptr) {
+  current_algo = hashtable_add(symboletable, id, algo);
+  if (current_algo != algo) {
+    free(algo);
+    return nullptr;
+  }
+  if (current_algo == nullptr) {
     free(algo);
     return nullptr;
   }
