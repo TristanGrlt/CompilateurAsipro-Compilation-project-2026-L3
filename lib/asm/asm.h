@@ -1,3 +1,6 @@
+#ifndef ASM__H
+#define ASM__H
+
 #define ax "ax"
 #define bx "bx"
 #define cx "cx"
@@ -58,3 +61,5 @@
   { printf(":%s\n", name); }
 
 #define toto
+
+#endif

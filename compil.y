@@ -5,6 +5,8 @@
   #include <limits.h>
   #include "utils.h"
   #include "asm.c"
+  #include "hashtable.h"
+  #include "symboletable.h"
   int yylex();
   void yyerror (char const *);
 %}
@@ -187,11 +189,13 @@ EXPR:
 void yyerror (char const *s) {fprintf(stderr, "\033[1;31m[!] : %s\n\033[0m", s); exit(EXIT_FAILURE);}
 
 int main() {
+  symboletable_init();
+
   printf("\tconst ax,main\n");
   printf("\tjmp ax\n");
 
   printf(":msgerr0\n");
-  printf("@string \"[!] Erreur : Division par 0\\n\"\n");
+  printf("@string \"[!] Erreur : Division par 0\\n\"\n");                    //
   printf(":err0\n");
   printf("\tconst ax,msgerr0\n");
   printf("\tcallprintfs ax\n");

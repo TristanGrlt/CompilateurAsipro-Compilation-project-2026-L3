@@ -17,8 +17,8 @@ BUILD_DIR=build
 
 # Librairies: découverte dynamique des fichiers .c et .h dans lib/
 LIB_DIRS=$(wildcard lib/*/)
-LIB_SRC=$(wildcard lib/*/*.c)
-LIB_OBJ=$(patsubst lib/hashtable/%.c,build/hashtable/%.o,$(filter lib/hashtable/%.c,$(LIB_SRC)))
+LIB_SRC=$(filter-out lib/asm/%.c,$(wildcard lib/*/*.c))
+LIB_OBJ=$(foreach dir,$(LIB_DIRS),$(patsubst lib/%.c,build/%.o,$(filter $(dir)%.c,$(LIB_SRC))))
 LIB_INCLUDES=$(addprefix -I, $(LIB_DIRS))
 
 # Fichiers générés par lex/yacc
@@ -49,12 +49,18 @@ $(BUILD_DIR)/lex.yy.o: lex.yy.c | $(BUILD_DIR)
 $(BUILD_DIR)/$(PROG).tab.o: $(PROG).tab.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(OPT) $(LIB_INCLUDES) $< -c -o $@
 
-# Compilation des librairies - règles spécifiques par librairie
-build/hashtable/%.o: lib/hashtable/%.c | $(BUILD_DIR) build/hashtable
+# Compilation des librairies - règle générique pour tous les sous-dossiers de lib/
+build/%/%.o: lib/%/%.c
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(OPT) $(LIB_INCLUDES) $< -c -o $@
 
-# Création du dossier build et de ses sous-dossiers
-$(BUILD_DIR) build/hashtable:
+# Règle de secours pour les .o dans build/*/
+$(BUILD_DIR)/%.o: lib/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(OPT) $(LIB_INCLUDES) $< -c -o $@
+
+# Création du dossier build
+$(BUILD_DIR):
 	mkdir -p $@
 
 # Inclusion des dépendances
