@@ -7,6 +7,7 @@
   #include "asm.c"
   #include "hashtable.h"
   #include "symboletable.h"
+  #include "ast.h"
   int yylex();
   void yyerror (char const *);
 %}
@@ -15,6 +16,7 @@
   int integer;
   type_s type;
   char *string;
+  struct ASTNode *node;
 }
 %token<integer> INT
 %token<integer> TRUE FALSE
@@ -26,9 +28,12 @@
 %left '*' '/'
 
 %type<type> EXPR
-%type<type> LALGO
-%type<type> LINSTRU
-%type<type> LPARAM
+// %type<type> LALGO
+// %type<type> LINSTRU
+// %type<type> LPARAM
+
+%type<node> ALGO LALGO LINSTRU INSTRU PARAM LPARAM
+
 %start START         // A remplacer par START
 
 %%
@@ -40,29 +45,41 @@ START:
 //---- [ALGO        ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
 ALGO:
-  BEGIN_ALGO '{' ID '}' {
+  BEGIN_ALGO '{' ID '}' '{' LPARAM '}' LINSTRU END_ALGO {
     symboletable_add($3);
-  } '{' LPARAM '}'
-    LINSTRU
-  END_ALGO;
+    $$ = make_algo($3, $6, $8);
+  }
+  ;
 LALGO:
-  LALGO ALGO | ALGO;
+  LALGO ALGO  {$$ = make_seq($1, $2);}
+  | ALGO      {$$ = $1;}
+  ;
 
 //---- [INSTRU      ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
 LINSTRU:
-  LINSTRU INSTRU | INSTRU | ;
+  LINSTRU INSTRU  {$$ = make_seq($1, $2);}
+  | INSTRU        {$$ = $1;}
+  |               {$$ = nullptr;}
+  ;
+
 INSTRU:
-  COND | LOOP_FOR_I | SET | RETURN
+  COND | LOOP_FOR_I | SET | RETURN;
 
 //---- [PARAM       ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
 PARAM:
   ID {
     symboletable_add_param($1, UNDEF);
-  };
+    $$ = make_var($1);
+  }
+  ;
+
 LPARAM:
-  LPARAM ',' PARAM | PARAM | ;
+  LPARAM ',' PARAM  { $$ = make_seq($1, $3); }
+  | PARAM           { $$ = $1; }
+  |                 { $$ = nullptr; } 
+  ;
 
 //---- [BOULCE FORI ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
