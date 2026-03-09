@@ -33,7 +33,8 @@
 // %type<type> LINSTRU
 // %type<type> LPARAM
 
-%type<node> EXPR ALGO LALGO LINSTRU INSTRU PARAM LPARAM SETER 
+%type<node> EXPR ALGO LALGO LINSTRU INSTRU PARAM LPARAM SETER
+%type<node> COND LOOP_FOR_I LOOP_DOWHILE NEXT_IF EXEC_CALL
 
 %start START         // A remplacer par START
 
@@ -41,7 +42,9 @@
 //---- [ALGO        ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
 START:
-  LALGO | CALL
+  LALGO         { ast_root = $1; }  
+  | EXEC_CALL   { ast_root = $1; }
+  ;
 
 //---- [ALGO        ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
@@ -52,16 +55,16 @@ ALGO:
   }
   ;
 LALGO:
-  LALGO ALGO  {$$ = make_seq($1, $2);}
-  | ALGO      {$$ = $1;}
+  LALGO ALGO  { $$ = make_seq($1, $2); }
+  | ALGO      { $$ = $1; }
   ;
 
 //---- [INSTRU      ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
 LINSTRU:
-  LINSTRU INSTRU  {$$ = make_seq($1, $2);}
-  | INSTRU        {$$ = $1;}
-  |               {$$ = nullptr;}
+  LINSTRU INSTRU  { $$ = make_seq($1, $2); }
+  | INSTRU        { $$ = $1; }
+  |               { $$ = nullptr; }
   ;
 
 INSTRU:
@@ -84,7 +87,6 @@ LPARAM:
 
 //---- [SET         ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
-
 SETER:
   SET '{' ID '}' '{' EXPR '}' {
     symboletable_add($3);
@@ -124,92 +126,19 @@ EXEC_CALL :
 //---- [EXPR        ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
 EXPR:
-  EXPR '+' EXPR   {
-    $$ = make_add($1, $3);
-  }
-| EXPR '-' EXPR   {
-    if ($1 == INT_T && $3 == INT_T) {
-      asm_sub();
-      //$$ = INT_T;
-    } else {
-      yyerror("Soustraction uniquement entre entiers");
-    }
-  }
-| EXPR '*' EXPR   {
-    if ($1 == INT_T && $3 == INT_T) {
-      asm_mul();
-      //$$ = INT_T;
-    } else {
-      yyerror("Multiplication uniquement entre entiers");
-    }
-  }
-| EXPR '/' EXPR   {
-    if ($1 == INT_T && $3 == INT_T) {
-      asm_div();
-      //$$ = INT_T;
-    } else {
-      yyerror("Division uniquement entre entiers");
-    }
-  }
-| INT             {
-    // _("ENTIER");
-    // const_int(ax, $1);
-    // push(ax);
-    $$ = make_const($1);
-  }
-| '(' EXPR ')' {
-    //$$ = $2;
-}
-| EXPR '<' EXPR   {
-    if ($1 == INT_T && $3 == INT_T) {
-      asm_lt();
-      //$$ = BOOL_T;
-    }  else { 
-      yyerror("Inférieur uniquement entre entiers");
-    }
-}
-| EXPR '>' EXPR   {
-    if ($1 == INT_T && $3 == INT_T) {
-      asm_gt();
-      //$$ = BOOL_T;
-    } else {
-      yyerror("Supérieur uniquement entre entiers");
-    }
-}
-| EXPR LEQ EXPR   { 
-    if ($1 == INT_T && $3 == INT_T) {
-      asm_leq();
-      //$$ = BOOL_T;
-    } else {
-      yyerror("Inférieur ou égale uniquement entre entiers");
-    }
-}
-| EXPR GEQ EXPR   {
-    if ($1 == INT_T && $3 == INT_T) {
-      asm_geq();
-      //$$ = BOOL_T;
-    } else {
-      yyerror("Supérieur ou égale uniquement entre entiers");
-    }
-}
-| EXPR '=' EXPR   {
-    if (($1 == $3 )) {
-      asm_eq();
-      //$$ = BOOL_T;
-    } else {
-      yyerror("Égalité uniquement entre deux entiers ou deux booléen");
-    }
-}
-| TRUE            {
-  // code asm
-  printf("Booléen : true\n");
-  //$$ = BOOL_T;
-}
-| FALSE            {
-  // code asm
-  printf("Booléen : false\n");
-  //$$ = BOOL_T;
-}
+  EXPR '+' EXPR { $$ = make_add($1, $3); }
+| EXPR '-' EXPR { $$ = make_sub($1, $3); }
+| EXPR '*' EXPR { $$ = make_mul($1, $3); }
+| EXPR '/' EXPR { $$ = make_div($1, $3); }
+| EXPR '<' EXPR { $$ = make_lt($1, $3); }
+| EXPR '>' EXPR { $$ = make_gt($1,$3); }
+| EXPR LEQ EXPR { $$ = make_leq($1,$3); }
+| EXPR GEQ EXPR { $$ = make_geq($1,$3); }
+| EXPR '=' EXPR { $$ = make_eq($1,$3); }
+| '(' EXPR ')'  { $$ = $2; }
+| INT           { $$ = make_const($1); }
+| TRUE          { $$ = make_true(); }
+| FALSE         { $$ = make_false(); }
 ;
 %%
 

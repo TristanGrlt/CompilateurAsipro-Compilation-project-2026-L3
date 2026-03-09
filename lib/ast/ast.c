@@ -36,6 +36,8 @@ ASTNode *make_var(char *name) {
   return node;
 }
 
+// Opération :
+
 ASTNode *make_add(ASTNode *left, ASTNode *right) {
   if (left->expr_type != INT_T || right->expr_type != INT_T) {
     yyerror("Erreur de type : Addition uniquement entre entiers");
@@ -48,6 +50,128 @@ ASTNode *make_add(ASTNode *left, ASTNode *right) {
   node->left = left;
   node->right = right;
   node->expr_type = INT_T;
+  return node;
+}
+
+ASTNode *make_sub(ASTNode *left, ASTNode *right) {
+  if (left->expr_type != INT_T || right->expr_type != INT_T) {
+    yyerror("Erreur de type : Soustraction uniquement entre entiers");
+    exit(EXIT_FAILURE);
+  }
+  ASTNode *node = create_node(NODE_SUB);
+  if (node == nullptr) {
+    return nullptr;
+  }
+  node->left = left;
+  node->right = right;
+  node->expr_type = INT_T;
+  return node;
+}
+
+ASTNode *make_mul(ASTNode *left, ASTNode *right) {
+  if (left->expr_type != INT_T || right->expr_type != INT_T) {
+    yyerror("Erreur de type : Multiplication uniquement entre entiers");
+    exit(EXIT_FAILURE);
+  }
+  ASTNode *node = create_node(NODE_MUL);
+  if (node == nullptr) {
+    return nullptr;
+  }
+  node->left = left;
+  node->right = right;
+  node->expr_type = INT_T;
+  return node;
+}
+
+ASTNode *make_div(ASTNode *left, ASTNode *right) {
+  if (left->expr_type != INT_T || right->expr_type != INT_T) {
+    yyerror("Erreur de type : Division uniquement entre entiers");
+    exit(EXIT_FAILURE);
+  }
+  ASTNode *node = create_node(NODE_DIV);
+  if (node == nullptr) {
+    return nullptr;
+  }
+  node->left = left;
+  node->right = right;
+  node->expr_type = INT_T;
+  return node;
+}
+
+ASTNode *make_lt(ASTNode *left, ASTNode *right) {
+  if (left->expr_type != INT_T || right->expr_type != INT_T) {
+    yyerror("Erreur de type : Comparaison uniquement entre entiers");
+    exit(EXIT_FAILURE);
+  }
+  ASTNode *node = create_node(NODE_LT);
+  if (node == nullptr) {
+    return nullptr;
+  }
+  node->left = left;
+  node->right = right;
+  node->expr_type = BOOL_T;
+  return node;
+}
+
+ASTNode *make_gt(ASTNode *left, ASTNode *right) {
+  if (left->expr_type != INT_T || right->expr_type != INT_T) {
+    yyerror("Erreur de type : Comparaison uniquement entre entiers");
+    exit(EXIT_FAILURE);
+  }
+  ASTNode *node = create_node(NODE_GT);
+  if (node == nullptr) {
+    return nullptr;
+  }
+  node->left = left;
+  node->right = right;
+  node->expr_type = BOOL_T;
+  return node;
+}
+
+ASTNode *make_geq(ASTNode *left, ASTNode *right) {
+  if (left->expr_type != INT_T || right->expr_type != INT_T) {
+    yyerror("Erreur de type : Comparaison uniquement entre entiers");
+    exit(EXIT_FAILURE);
+  }
+  ASTNode *node = create_node(NODE_GEQ);
+  if (node == nullptr) {
+    return nullptr;
+  }
+  node->left = left;
+  node->right = right;
+  node->expr_type = BOOL_T;
+  return node;
+}
+
+ASTNode *make_leq(ASTNode *left, ASTNode *right) {
+  if (left->expr_type != INT_T || right->expr_type != INT_T) {
+    yyerror("Erreur de type : Comparaison uniquement entre entiers");
+    exit(EXIT_FAILURE);
+  }
+  ASTNode *node = create_node(NODE_LEQ);
+  if (node == nullptr) {
+    return nullptr;
+  }
+  node->left = left;
+  node->right = right;
+  node->expr_type = BOOL_T;
+  return node;
+}
+
+ASTNode *make_eq(ASTNode *left, ASTNode *right) {
+  if (!(left->expr_type == INT_T && right->expr_type == INT_T) ||
+      !(left->expr_type != BOOL_T && right->expr_type != BOOL_T)) {
+    yyerror("Erreur de type : Comparaison uniquement entre deux entiers ou "
+            "booleens");
+    exit(EXIT_FAILURE);
+  }
+  ASTNode *node = create_node(NODE_EQ);
+  if (node == nullptr) {
+    return nullptr;
+  }
+  node->left = left;
+  node->right = right;
+  node->expr_type = BOOL_T;
   return node;
 }
 
@@ -104,6 +228,24 @@ ASTNode *make_seq(ASTNode *left, ASTNode *right) {
   return node;
 }
 
+ASTNode *make_true() {
+  ASTNode *node = create_node(NODE_TRUE);
+  if (node == nullptr) {
+    return nullptr;
+  }
+  node->expr_type = BOOL_T;
+  return node;
+}
+
+ASTNode *make_false() {
+  ASTNode *node = create_node(NODE_FALSE);
+  if (node == nullptr) {
+    return nullptr;
+  }
+  node->expr_type = BOOL_T;
+  return node;
+}
+
 void generate_asm(ASTNode *node) {
   if (node == nullptr) {
     printf("\n\n----------------------\nErreur : Noeud AST nul\nRien n'as été "
@@ -112,6 +254,7 @@ void generate_asm(ASTNode *node) {
            "puisse être exécuté\n\n\n\n");
     return;
   }
+  printf("Noeud de type : %d\n", node->type);
   switch (node->type) {
 
   case NODE_ADD:
@@ -119,11 +262,68 @@ void generate_asm(ASTNode *node) {
     generate_asm(node->right);
     asm_add();
     break;
-
+  case NODE_SUB:
+    generate_asm(node->left);
+    generate_asm(node->right);
+    asm_sub();
+    break;
+  case NODE_MUL:
+    generate_asm(node->left);
+    generate_asm(node->right);
+    asm_mul();
+    break;
+  case NODE_DIV:
+    generate_asm(node->left);
+    generate_asm(node->right);
+    asm_div();
+    break;
+  case NODE_LT:
+    generate_asm(node->left);
+    generate_asm(node->right);
+    asm_lt();
+    break;
+  case NODE_GT:
+    generate_asm(node->left);
+    generate_asm(node->right);
+    asm_gt();
+    break;
+  case NODE_GEQ:
+    generate_asm(node->left);
+    generate_asm(node->right);
+    asm_geq();
+    break;
+  case NODE_LEQ:
+    generate_asm(node->left);
+    generate_asm(node->right);
+    asm_leq();
+    break;
+  case NODE_EQ:
+    generate_asm(node->left);
+    generate_asm(node->right);
+    asm_eq();
+    break;
+  case NODE_TRUE:
+    _("BOOLEEN VRAI");
+    const_int(ax, 1);
+    push(ax);
+    break;
+  case NODE_FALSE:
+    _("BOOLEEN FAUX");
+    const_int(ax, 0);
+    push(ax);
+    break;
   case NODE_CONST:
     _("ENTIER");
     const_int(ax, node->val);
     push(ax);
+    break;
+  case NODE_SEQ:
+    generate_asm(node->left);
+    generate_asm(node->right);
+    break;
+  case NODE_ALGO:
+    _("ALGO");
+    generate_asm(node->right);
     break;
 
   default:

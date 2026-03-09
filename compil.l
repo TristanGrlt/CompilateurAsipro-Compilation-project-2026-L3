@@ -72,4 +72,3 @@ void yytext_copy(char **id, const char *s) {
   strcpy(copy,s);
   *id = copy;
 }
-

@@ -4,9 +4,19 @@
 #include "utils.h"
 
 typedef enum {
-  NODE_CONST,  // (ex: 5)
-  NODE_VAR,    // (ex: p)
-  NODE_ADD,    // (+)
+  NODE_CONST, // (ex: 5)
+  NODE_VAR,   // (ex: p)
+  NODE_SUB,
+  NODE_ADD,
+  NODE_MUL,
+  NODE_DIV,
+  NODE_LT,
+  NODE_GT,
+  NODE_GEQ,
+  NODE_LEQ,
+  NODE_EQ,
+  NODE_TRUE,
+  NODE_FALSE,
   NODE_SET,    // (\SET)
   NODE_CALL,   // (\CALL)
   NODE_RETURN, // (\RETURN)
@@ -28,6 +38,16 @@ typedef struct ASTNode {
 ASTNode *make_const(int val);
 ASTNode *make_var(char *name);
 ASTNode *make_add(ASTNode *left, ASTNode *right);
+ASTNode *make_sub(ASTNode *left, ASTNode *right);
+ASTNode *make_mul(ASTNode *left, ASTNode *right);
+ASTNode *make_div(ASTNode *left, ASTNode *right);
+ASTNode *make_lt(ASTNode *left, ASTNode *right);
+ASTNode *make_gt(ASTNode *left, ASTNode *right);
+ASTNode *make_geq(ASTNode *left, ASTNode *right);
+ASTNode *make_leq(ASTNode *left, ASTNode *right);
+ASTNode *make_eq(ASTNode *left, ASTNode *right);
+ASTNode *make_true(void);
+ASTNode *make_false(void);
 ASTNode *make_set(char *var_name, ASTNode *expr);
 ASTNode *make_call(char *func_name, ASTNode *arg);
 ASTNode *make_return(ASTNode *expr);
