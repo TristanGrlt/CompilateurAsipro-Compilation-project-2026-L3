@@ -10,6 +10,7 @@
   #include "ast.h"
   int yylex();
   void yyerror (char const *);
+  ASTNode *ast_root = nullptr; 
 %}
 
 %union {
@@ -27,12 +28,12 @@
 %left '+' '-'
 %left '*' '/'
 
-%type<type> EXPR
+// %type<type> EXPR
 // %type<type> LALGO
 // %type<type> LINSTRU
 // %type<type> LPARAM
 
-%type<node> ALGO LALGO LINSTRU INSTRU PARAM LPARAM
+%type<node> EXPR ALGO LALGO LINSTRU INSTRU PARAM LPARAM SETER 
 
 %start START         // A remplacer par START
 
@@ -40,7 +41,7 @@
 //---- [ALGO        ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
 START:
-  ALGO | CALL
+  LALGO | CALL
 
 //---- [ALGO        ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
@@ -64,7 +65,7 @@ LINSTRU:
   ;
 
 INSTRU:
-  COND | LOOP_FOR_I | SET | RETURN;
+  COND | LOOP_FOR_I | SETER | RETURN;
 
 //---- [PARAM       ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
@@ -79,6 +80,16 @@ LPARAM:
   LPARAM ',' PARAM  { $$ = make_seq($1, $3); }
   | PARAM           { $$ = $1; }
   |                 { $$ = nullptr; } 
+  ;
+
+//---- [SET         ] --------------------------------------------------------//
+//----------------------------------------------------------------------------//
+
+SETER:
+  SET '{' ID '}' '{' EXPR '}' {
+    symboletable_add($3);
+    $$ = make_set($3, $6);
+  }
   ;
 
 //---- [BOULCE FORI ] --------------------------------------------------------//
@@ -114,17 +125,12 @@ EXEC_CALL :
 //----------------------------------------------------------------------------//
 EXPR:
   EXPR '+' EXPR   {
-    if ($1 == INT_T && $3 == INT_T) {
-      asm_add();
-      $$ = INT_T;
-    } else {
-      yyerror("Addition uniquement entre entiers");
-    }
+    $$ = make_add($1, $3);
   }
 | EXPR '-' EXPR   {
     if ($1 == INT_T && $3 == INT_T) {
       asm_sub();
-      $$ = INT_T;
+      //$$ = INT_T;
     } else {
       yyerror("Soustraction uniquement entre entiers");
     }
@@ -132,7 +138,7 @@ EXPR:
 | EXPR '*' EXPR   {
     if ($1 == INT_T && $3 == INT_T) {
       asm_mul();
-      $$ = INT_T;
+      //$$ = INT_T;
     } else {
       yyerror("Multiplication uniquement entre entiers");
     }
@@ -140,24 +146,24 @@ EXPR:
 | EXPR '/' EXPR   {
     if ($1 == INT_T && $3 == INT_T) {
       asm_div();
-      $$ = INT_T;
+      //$$ = INT_T;
     } else {
       yyerror("Division uniquement entre entiers");
     }
   }
 | INT             {
-    _("ENTIER");
-    const_int(ax, $1);
-    push(ax);
-    $$ = INT_T;
+    // _("ENTIER");
+    // const_int(ax, $1);
+    // push(ax);
+    $$ = make_const($1);
   }
 | '(' EXPR ')' {
-    $$ = $2;
+    //$$ = $2;
 }
 | EXPR '<' EXPR   {
     if ($1 == INT_T && $3 == INT_T) {
       asm_lt();
-      $$ = BOOL_T;
+      //$$ = BOOL_T;
     }  else { 
       yyerror("Inférieur uniquement entre entiers");
     }
@@ -165,7 +171,7 @@ EXPR:
 | EXPR '>' EXPR   {
     if ($1 == INT_T && $3 == INT_T) {
       asm_gt();
-      $$ = BOOL_T;
+      //$$ = BOOL_T;
     } else {
       yyerror("Supérieur uniquement entre entiers");
     }
@@ -173,7 +179,7 @@ EXPR:
 | EXPR LEQ EXPR   { 
     if ($1 == INT_T && $3 == INT_T) {
       asm_leq();
-      $$ = BOOL_T;
+      //$$ = BOOL_T;
     } else {
       yyerror("Inférieur ou égale uniquement entre entiers");
     }
@@ -181,7 +187,7 @@ EXPR:
 | EXPR GEQ EXPR   {
     if ($1 == INT_T && $3 == INT_T) {
       asm_geq();
-      $$ = BOOL_T;
+      //$$ = BOOL_T;
     } else {
       yyerror("Supérieur ou égale uniquement entre entiers");
     }
@@ -189,7 +195,7 @@ EXPR:
 | EXPR '=' EXPR   {
     if (($1 == $3 )) {
       asm_eq();
-      $$ = BOOL_T;
+      //$$ = BOOL_T;
     } else {
       yyerror("Égalité uniquement entre deux entiers ou deux booléen");
     }
@@ -197,12 +203,12 @@ EXPR:
 | TRUE            {
   // code asm
   printf("Booléen : true\n");
-  $$ = BOOL_T;
+  //$$ = BOOL_T;
 }
 | FALSE            {
   // code asm
   printf("Booléen : false\n");
-  $$ = BOOL_T;
+  //$$ = BOOL_T;
 }
 ;
 %%
@@ -227,7 +233,9 @@ int main() {
   printf("\tconst ax,2\n"); 
   printf("\tsub sp,ax\n");
 
-  yyparse();
+  if (yyparse() == 0) {
+    generate_asm(ast_root);
+  } 
 
   printf(";;;;;;;;;;  AFFICHAGE  ;;;;;;;;;;\n");
   printf("\tcp ax,sp\n");

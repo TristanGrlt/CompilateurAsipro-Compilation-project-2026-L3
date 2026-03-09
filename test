@@ -1,0 +1,3 @@
+\begin{algo}{func}{ma_var}
+  \SET{a}{45 + 6 + 3}
+\end{algo}

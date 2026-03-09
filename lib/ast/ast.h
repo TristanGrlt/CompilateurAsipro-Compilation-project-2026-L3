@@ -1,6 +1,8 @@
 #ifndef AST_H
 #define AST_H
 
+#include "utils.h"
+
 typedef enum {
   NODE_CONST,  // (ex: 5)
   NODE_VAR,    // (ex: p)
@@ -17,6 +19,7 @@ typedef struct ASTNode {
 
   int val;    // Utilisé si type == NODE_CONST
   char *name; // Utilisé si NODE_VAR, NODE_CALL, ou NODE_ALGO
+  type_s expr_type;
 
   struct ASTNode *left;
   struct ASTNode *right;

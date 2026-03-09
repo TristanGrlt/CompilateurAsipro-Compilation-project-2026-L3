@@ -29,6 +29,16 @@
 #define div(r1, r2)                                                            \
   { printf("\tdiv " r1 "," r2 "\n"); }
 
+void asm_add(void);
+void asm_sub(void);
+void asm_mul(void);
+void asm_div(void);
+void asm_lt(void);
+void asm_gt(void);
+void asm_geq(void);
+void asm_leq(void);
+void asm_eq(void);
+
 //---- [COMPARAISON ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
 #define sless(r1, r2)                                                          \
