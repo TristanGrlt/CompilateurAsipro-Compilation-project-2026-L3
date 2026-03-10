@@ -141,3 +141,45 @@ void asm_eq(void) {
   label(end_eq);
   push(ax);
 }
+
+void asm_start_algo(ASTNode *node) {
+  _("CONFIGURATION ALGO");
+  label(node->name);
+  push(bp);   // Sauvegarde adresse de base de pile
+  cp(bp, sp); // Remonte l'adresse de base de pile
+  // Sauvgarde du contexte
+  push(ax);
+  push(bx);
+  push(cx);
+  push(dx);
+  _("DEBUT ALGO");
+}
+
+void asm_end_algo() {
+  _("RESTAURATION ALGO");
+  // Restauration du contexte
+  pop(dx);
+  pop(cx);
+  pop(bx);
+  pop(ax);
+  pop(bp); // Restaure adresse de base de pile
+  ret;     // Retour à l'appelant
+  _("FIN ALGO");
+  _("")
+}
+
+void asm_start_call_algo(info_algo *algo_info) {
+  // Réserver valeur de retour
+  const_int(ax, 0);
+  push(ax);
+  // Réserver espace pour les variables locales
+  printf("; Réserver espace pour %d variables locales\n", algo_info->nb_varloc);
+  for (int i = 0; i < algo_info->nb_varloc; i++) {
+    push(ax);
+  }
+  // Évaluer et empiler les arguments
+  // A FAIRE
+  // Appeler l'algorithme
+  const_string(ax, algo_info->id);
+  call(ax);
+}

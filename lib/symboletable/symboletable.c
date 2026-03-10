@@ -57,6 +57,13 @@ void *symboletable_add(const char *id) {
   return algo;
 }
 
+info_algo *symboletable_get(const char *id) {
+  if (symboletable == nullptr) {
+    return nullptr;
+  }
+  return hashtable_search(symboletable, id);
+}
+
 void symboletable_dispose(void) {
   if (symboletable != nullptr) {
     hashtable_dispose(&symboletable);

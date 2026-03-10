@@ -33,8 +33,8 @@
 // %type<type> LINSTRU
 // %type<type> LPARAM
 
-%type<node> EXPR ALGO LALGO LINSTRU INSTRU PARAM LPARAM SETER
-%type<node> COND LOOP_FOR_I LOOP_DOWHILE NEXT_IF EXEC_CALL
+%type<node> EXPR ALGO LALGO LINSTRU INSTRU PARAM LPARAM SETER LEXPR
+%type<node> COND LOOP_FOR_I LOOP_DOWHILE NEXT_IF EXEC_CALL RETURNER
 
 %start START         // A remplacer par START
 
@@ -42,8 +42,8 @@
 //---- [ALGO        ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
 START:
-  LALGO         { ast_root = $1; }  
-  | EXEC_CALL   { ast_root = $1; }
+  LALGO EXEC_CALL   { ast_root = make_seq($1, $2); }
+  | LALGO           { ast_root = $1; }
   ;
 
 //---- [ALGO        ] --------------------------------------------------------//
@@ -63,12 +63,11 @@ LALGO:
 //----------------------------------------------------------------------------//
 LINSTRU:
   LINSTRU INSTRU  { $$ = make_seq($1, $2); }
-  | INSTRU        { $$ = $1; }
   |               { $$ = nullptr; }
   ;
 
 INSTRU:
-  COND | LOOP_FOR_I | SETER | RETURN;
+  COND | LOOP_FOR_I | SETER | RETURNER;
 
 //---- [PARAM       ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
@@ -99,7 +98,7 @@ SETER:
 LOOP_FOR_I:
   FORI '{' ID '}' '{' EXPR '}' '{' EXPR '}'
     LINSTRU
-  OD;
+  OD; 
 
 //---- [BOULCE FORI ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
@@ -118,10 +117,17 @@ COND :
 NEXT_IF:
   ELSE LINSTRU | ;
 
-//---- [CALL       ] --------------------------------------------------------//
+//---- [CALL       ] ---------------------------------------------------------//
 //----------------------------------------------------------------------------//
 EXEC_CALL :
-  CALL '{' ID '}' '{' LPARAM '}'
+  CALL '{' ID '}' '{' LEXPR '}' { $$ = make_call($3, $6); }
+;
+
+//---- [RETURN      ] --------------------------------------------------------//
+//----------------------------------------------------------------------------//
+RETURNER:
+  RETURN '{' EXPR '}' { $$ = make_return($3); }
+;
 
 //---- [EXPR        ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
@@ -140,6 +146,12 @@ EXPR:
 | TRUE          { $$ = make_true(); }
 | FALSE         { $$ = make_false(); }
 ;
+
+LEXPR:
+  LEXPR ',' EXPR { $$ = make_seq($1, $3); }
+| EXPR           { $$ = $1; }
+|                { $$ = nullptr; }
+;
 %%
 
 void yyerror (char const *s) {fprintf(stderr, "\033[1;31m[!] : %s\n\033[0m", s); exit(EXIT_FAILURE);}
@@ -151,7 +163,7 @@ int main() {
   printf("\tjmp ax\n");
 
   printf(":msgerr0\n");
-  printf("@string \"[!] Erreur : Division par 0\\n\"\n");                    //
+  printf("@string \"[!] Erreur : Division par 0\\n\"\n");
   printf(":err0\n");
   printf("\tconst ax,msgerr0\n");
   printf("\tcallprintfs ax\n");

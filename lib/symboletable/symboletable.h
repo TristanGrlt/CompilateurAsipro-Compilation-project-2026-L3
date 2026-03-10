@@ -14,9 +14,15 @@ void *symboletable_init(void);
 // vers la valeur associée à id dans la table de symboles.
 void *symboletable_add(const char *id);
 
-// symboletable_add_param : ajoute à l'algorithme courrant le paramètre id de
-// type type. Renvoie un pointeur nul en cas de dépassement de capacité. Renvoie
-// sinon un pointeur vers la valeur associée à id dans la table de symboles.
+// symboletable_get : renvoie un pointeur vers la valeur associée à id dans la
+// table de symboles, ou un pointeur nul si id n'est pas présent dans la table
+// de symboles.
+info_algo *symboletable_get(const char *id);
+
+// symboletable_add_param : ajoute à l'algorithme courrant le paramètre id
+// de type type. Renvoie un pointeur nul en cas de dépassement de capacité.
+// Renvoie sinon un pointeur vers la valeur associée à id dans la table de
+// symboles.
 void *symboletable_add_param(const char *id, type_s type);
 
 // symboletable_dispose : libère les ressources allouées à la table de

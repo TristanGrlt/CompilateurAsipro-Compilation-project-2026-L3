@@ -1,5 +1,6 @@
 #include "ast.h"
 #include "asm.h"
+#include "symboletable.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -254,9 +255,14 @@ void generate_asm(ASTNode *node) {
            "puisse être exécuté\n\n\n\n");
     return;
   }
-  printf("Noeud de type : %d\n", node->type);
+  // printf("Noeud de type : %d\n", node->type);
   switch (node->type) {
 
+  case NODE_SET:
+    generate_asm(node->left);
+    // Ici on devrait générer le code pour stocker la valeur dans la variable
+    // node->name
+    break;
   case NODE_ADD:
     generate_asm(node->left);
     generate_asm(node->right);
@@ -323,8 +329,18 @@ void generate_asm(ASTNode *node) {
     break;
   case NODE_ALGO:
     _("ALGO");
+    asm_start_algo(node);
     generate_asm(node->right);
+    asm_end_algo();
     break;
+  case NODE_CALL:
+    _("CALL");
+    info_algo *algo_info = symboletable_get(node->name);
+    if (algo_info == nullptr) {
+      yyerror("Appel d'un algorithme non défini");
+      exit(EXIT_FAILURE);
+    }
+    asm_start_call_algo(algo_info);
 
   default:
     break;

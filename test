@@ -1,3 +1,4 @@
-\begin{algo}{func}{ma_var}
-  \SET{a}{45 + 6 + 3}
+\begin{algo}{func}{ma_var, truc, muche, bidule}
+  \SET{a}{(45 + 6 - 3 + (45 * 6) / 3) <= 45}
 \end{algo}
+\CALL{func}{45, 6, 3, 45}
