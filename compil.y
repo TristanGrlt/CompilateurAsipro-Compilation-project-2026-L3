@@ -42,16 +42,22 @@
 //---- [ALGO        ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
 START:
-  LALGO EXEC_CALL   { ast_root = make_seq($1, $2); }
-  | LALGO           { ast_root = $1; }
+  LALGO EXEC_CALL   { ast_root = make_programe($1, $2); }
   ;
 
 //---- [ALGO        ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
 ALGO:
-  BEGIN_ALGO '{' ID '}' '{' LPARAM '}' LINSTRU END_ALGO {
-    symboletable_add($3);
-    $$ = make_algo($3, $6, $8);
+  BEGIN_ALGO '{' ID '}' {
+    if (symboletable_add($3) == nullptr) {
+      yyerror("Erreur interne : Impossible d'ajouter l'algorithme à la table de "
+              "symboles");
+      exit(EXIT_FAILURE);
+    } else {
+      printf("; Algorithme %s ajouté à la table de symboles\n", $3);
+    }
+  } '{' LPARAM '}' LINSTRU END_ALGO {
+    $$ = make_algo($3, $7, $9);
   }
   ;
 LALGO:
@@ -88,7 +94,6 @@ LPARAM:
 //----------------------------------------------------------------------------//
 SETER:
   SET '{' ID '}' '{' EXPR '}' {
-    symboletable_add($3);
     $$ = make_set($3, $6);
   }
   ;
@@ -158,31 +163,30 @@ void yyerror (char const *s) {fprintf(stderr, "\033[1;31m[!] : %s\n\033[0m", s);
 
 int main() {
   symboletable_init();
-
-  printf("\tconst ax,main\n");
-  printf("\tjmp ax\n");
-
-  printf(":msgerr0\n");
-  printf("@string \"[!] Erreur : Division par 0\\n\"\n");
-  printf(":err0\n");
-  printf("\tconst ax,msgerr0\n");
-  printf("\tcallprintfs ax\n");
-  printf("\tend\n");
-  printf(":main\n");
-  printf("\tconst bp,stack\n");
-  printf("\tconst sp,stack\n");
-  printf("\tconst ax,2\n"); 
-  printf("\tsub sp,ax\n");
-
   if (yyparse() == 0) {
-    generate_asm(ast_root);
-  } 
+    printf("\tconst ax,main\n");
+    printf("\tjmp ax\n");
 
-  printf(";;;;;;;;;;  AFFICHAGE  ;;;;;;;;;;\n");
-  printf("\tcp ax,sp\n");
-  printf("\tcallprintfd ax\n");
-  printf("\tend\n");
-  printf(":stack\n");
-  printf("@int 0\n");
-  return EXIT_SUCCESS;
+    printf(":msgerr0\n");
+    printf("@string \"[!] Erreur : Division par 0\\n\"\n");
+    printf(":err0\n");
+    printf("\tconst ax,msgerr0\n");
+    printf("\tcallprintfs ax\n");
+    printf("\tend\n");
+    // printf(":main\n");
+    // printf("\tconst bp,stack\n");
+    // printf("\tconst sp,stack\n");
+    // printf("\tconst ax,2\n"); 
+    // printf("\tsub sp,ax\n");
+
+    generate_asm(ast_root);
+
+    printf(";;;;;;;;;;  AFFICHAGE  ;;;;;;;;;;\n");
+    printf("\tcp ax,sp\n");
+    printf("\tcallprintfd ax\n");
+    printf("\tend\n");
+    printf(":stack\n");
+    printf("@int 0\n");
+    return EXIT_SUCCESS;
+  }
 }

@@ -183,3 +183,9 @@ void asm_start_call_algo(info_algo *algo_info) {
   const_string(ax, algo_info->id);
   call(ax);
 }
+
+void asm_compute_var_addr(int offset, const char *dest_reg) {
+  printf("\tcp %s,%s\n", dest_reg, bp);
+  printf("\tconst %s,%d\n", bx, (offset * 2) + 2);
+  printf("\tsub %s,%s\n", dest_reg, bx);
+}

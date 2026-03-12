@@ -1,3 +1,10 @@
+;symboletable_add : func
+; Algorithme func ajouté à la table de symboles
+;symboletable_add_param : ma_var type : 2
+;symboletable_add_param : truc type : 2
+;symboletable_add_param : muche type : 2
+;symboletable_add_param : bidule type : 2
+;symboletable_add_varloc : a type : 0
 	const ax,main
 	jmp ax
 :msgerr0
@@ -6,19 +13,23 @@
 	const ax,msgerr0
 	callprintfs ax
 	end
-:main
-	const bp,stack
-	const sp,stack
-	const ax,2
-	sub sp,ax
-;symboletable_add : a
-;symboletable_add : func
+;;;;;;;;;; PROGRAMME ;;;;;;;;;;
 ;;;;;;;;;; ALGO ;;;;;;;;;;
+;;;;;;;;;; CONFIGURATION ALGO ;;;;;;;;;;
+:func
+	push bp
+	cp bp,sp
+	push ax
+	push bx
+	push cx
+	push dx
+;;;;;;;;;; DEBUT ALGO ;;;;;;;;;;
+;;;;;;;;;; SET ;;;;;;;;;;
 ;;;;;;;;;; ENTIER ;;;;;;;;;;
-	const ax,45
+	const ax,100
 	push ax
 ;;;;;;;;;; ENTIER ;;;;;;;;;;
-	const ax,6
+	const ax,100
 	push ax
 ;;;;;;;;;; ADDITION ;;;;;;;;;;
 	pop bx
@@ -26,57 +37,58 @@
 	add ax,bx
 	push ax
 ;;;;;;;;;; ENTIER ;;;;;;;;;;
-	const ax,3
+	const ax,50
 	push ax
 ;;;;;;;;;; SOUSTRACTION ;;;;;;;;;;
 	pop bx
 	pop ax
 	sub ax,bx
 	push ax
+;;;;;;;;;; Stockage valeur dans la variable ;;;;;;;;;;
+	cp cx,bp
+	const bx,4
+	sub cx,bx
+	pop ax
+	storew ax,cx
+;;;;;;;;;; RETURN ;;;;;;;;;;
 ;;;;;;;;;; ENTIER ;;;;;;;;;;
-	const ax,45
+	const ax,123
 	push ax
-;;;;;;;;;; ENTIER ;;;;;;;;;;
-	const ax,6
-	push ax
-;;;;;;;;;; MULTIPLICATION ;;;;;;;;;;
+	pop ax
+	cp bx,bp
+	const cx,2
+	add bx,cx
+	storew ax,bx
+;;;;;;;;;; RESTAURATION ALGO ;;;;;;;;;;
+	pop dx
+	pop cx
 	pop bx
 	pop ax
-	mul ax,bx
-	push ax
-;;;;;;;;;; ENTIER ;;;;;;;;;;
-	const ax,3
-	push ax
-;;;;;;;;;; DIVISION ;;;;;;;;;;
+	pop bp
+	ret
+;;;;;;;;;; FIN ALGO ;;;;;;;;;;
+;;;;;;;;;;  ;;;;;;;;;;
+;;;;;;;;;; RESTAURATION ALGO ;;;;;;;;;;
+	pop dx
+	pop cx
 	pop bx
 	pop ax
-	const cx,err0
-	div ax,bx
-	jmpe cx
-	push ax
-;;;;;;;;;; ADDITION ;;;;;;;;;;
-	pop bx
-	pop ax
-	add ax,bx
-	push ax
-;;;;;;;;;; ENTIER ;;;;;;;;;;
-	const ax,45
-	push ax
-;;;;;;;;;; LEQ ;;;;;;;;;;
-	pop bx
-	pop ax
-	const cx,is_leq_0
-	cmp ax,bx
-	jmpc cx
-	sless ax,bx
-	jmpc cx
+	pop bp
+	ret
+;;;;;;;;;; FIN ALGO ;;;;;;;;;;
+;;;;;;;;;;  ;;;;;;;;;;
+:main
+	const bp,stack
+	const sp,stack
+	const ax,2
+	sub sp,ax
+;;;;;;;;;; CALL ;;;;;;;;;;
 	const ax,0
-	const dx,end_leq_1
-	jmp dx
-:is_leq_0
-	const ax,1
-:end_leq_1
 	push ax
+; Réserver espace pour 1 variables locales
+	push ax
+	const ax,func
+	call ax
 ;;;;;;;;;;  AFFICHAGE  ;;;;;;;;;;
 	cp ax,sp
 	callprintfd ax

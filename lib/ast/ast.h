@@ -4,6 +4,7 @@
 #include "utils.h"
 
 typedef enum {
+  NODE_PROGRAM,
   NODE_CONST, // (ex: 5)
   NODE_VAR,   // (ex: p)
   NODE_SUB,
@@ -35,6 +36,7 @@ typedef struct ASTNode {
   struct ASTNode *right;
 } ASTNode;
 
+ASTNode *make_programe(ASTNode *algos, ASTNode *main_call);
 ASTNode *make_const(int val);
 ASTNode *make_var(char *name);
 ASTNode *make_add(ASTNode *left, ASTNode *right);

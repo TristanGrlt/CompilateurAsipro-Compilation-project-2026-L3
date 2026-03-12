@@ -93,3 +93,45 @@ void *symboletable_add_param(const char *id, type_s type) {
   printf(";symboletable_add_param : %s type : %d\n", id, type);
   return var;
 }
+
+void *symboletable_add_varloc(const char *id, type_s type) {
+  if (current_algo == nullptr) {
+    printf(";symboletable_add_varloc : current_algo is null\n");
+    return nullptr;
+  }
+  if (symboletable == nullptr) {
+    printf(";symboletable_add_varloc : symboltable is null\n");
+    return nullptr;
+  }
+  info_var *var = malloc(sizeof(*var));
+  if (var == nullptr) {
+    printf(";symboletable_add_varloc : malloc failed\n");
+    return nullptr;
+  }
+  var->id = strdup(id);
+  var->nb = ++current_algo->nb_varloc;
+  var->type = type;
+  void *r = hashtable_add(current_algo->varloc, var->id, var);
+  if (r != var) {
+    free(var->id);
+    free(var);
+    printf(";symboletable_add_varloc : hashtable_add failed\n");
+    return nullptr;
+  }
+  printf(";symboletable_add_varloc : %s type : %d\n", id, type);
+  return var;
+}
+
+info_var *symboletable_get_var(const char *id) {
+  if (current_algo == nullptr) {
+    return nullptr;
+  }
+  if (symboletable == nullptr) {
+    return nullptr;
+  }
+  info_var *var = hashtable_search(current_algo->varloc, id);
+  if (var != nullptr) {
+    return var;
+  }
+  return hashtable_search(current_algo->param, id);
+}

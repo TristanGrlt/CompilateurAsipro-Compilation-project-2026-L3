@@ -18,6 +18,21 @@ ASTNode *create_node(NodeType type) {
   return node;
 }
 
+ASTNode *make_programe(ASTNode *algos, ASTNode *main_call) {
+  if (main_call != nullptr && main_call->type != NODE_CALL) {
+    yyerror("Erreur de type : Le programme doit se terminer par un appel à "
+            "l'algorithme principal");
+    exit(EXIT_FAILURE);
+  }
+  ASTNode *node = create_node(NODE_PROGRAM);
+  if (node == nullptr) {
+    return nullptr;
+  }
+  node->left = algos;
+  node->right = main_call;
+  return node;
+}
+
 ASTNode *make_const(int val) {
   ASTNode *node = create_node(NODE_CONST);
   if (node == nullptr) {
@@ -177,12 +192,34 @@ ASTNode *make_eq(ASTNode *left, ASTNode *right) {
 }
 
 ASTNode *make_set(char *var_name, ASTNode *expr) {
+  info_var *var = symboletable_get_var(var_name);
+  if (var == nullptr) {
+    // La variable n'existe pas encore, on l'ajoute à la table de symboles
+    var = symboletable_add_varloc(var_name, expr->expr_type);
+    if (var == nullptr) {
+      yyerror("Erreur interne : Impossible d'ajouter la variable locale à la "
+              "table de symboles");
+      exit(EXIT_FAILURE);
+    }
+  } else {
+    // La variable existe déjà, on vérifie que le type de l'expression
+    // correspond
+    if (var->type == UNDEF) {
+      var->type = expr->expr_type;
+    } else if (var->type != expr->expr_type) {
+      yyerror("Erreur de type : Tentative d'affecter une expression de type "
+              "différent à la variable");
+      exit(EXIT_FAILURE);
+    }
+  }
   ASTNode *node = create_node(NODE_SET);
   if (node == nullptr) {
     return nullptr;
   }
   node->name = var_name;
   node->left = expr;
+  node->type = NODE_SET;
+  node->expr_type = var->type;
   return node;
 }
 
@@ -259,9 +296,19 @@ void generate_asm(ASTNode *node) {
   switch (node->type) {
 
   case NODE_SET:
+    _("SET");
     generate_asm(node->left);
-    // Ici on devrait générer le code pour stocker la valeur dans la variable
-    // node->name
+    info_var *var = symboletable_get_var(node->name);
+    if (var == nullptr) {
+      yyerror(
+          "Erreur interne : Impossible de trouver la variable dans la table "
+          "de symboles");
+      exit(EXIT_FAILURE);
+    }
+    _("Stockage valeur dans la variable");
+    asm_compute_var_addr(var->nb, cx);
+    pop(ax);
+    storew(ax, cx);
     break;
   case NODE_ADD:
     generate_asm(node->left);
@@ -341,7 +388,32 @@ void generate_asm(ASTNode *node) {
       exit(EXIT_FAILURE);
     }
     asm_start_call_algo(algo_info);
-
+    break;
+  case NODE_RETURN:
+    //  ATTENTION, PAS LA BONNE LOGIQUE APPLIQUÉ ICI. JUSTE POUR DU TEST
+    _("RETURN");
+    generate_asm(node->left);
+    pop(ax);
+    cp(bx, bp);
+    const_int(cx, 2);
+    add(bx, cx);
+    storew(ax, bx);
+    asm_end_algo();
+    break;
+  case NODE_PROGRAM:
+    _("PROGRAMME");
+    if (node->left != nullptr) {
+      generate_asm(node->left);
+    }
+    label("main");
+    const_string(bp, "stack");
+    const_string(sp, "stack");
+    const_int(ax, 2);
+    sub(sp, ax);
+    if (node->right != nullptr) {
+      generate_asm(node->right);
+    }
+    break;
   default:
     break;
   }

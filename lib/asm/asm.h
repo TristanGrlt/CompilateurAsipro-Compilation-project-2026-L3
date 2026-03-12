@@ -78,6 +78,8 @@ void asm_eq(void);
 //----------------------------------------------------------------------------//
 #define cp(r1, r2)                                                             \
   { printf("\tcp " r1 "," r2 "\n"); }
+#define storew(r1, r2)                                                         \
+  { printf("\tstorew " r1 "," r2 "\n"); }
 
 //---- [ALGO          ] ------------------------------------------------------//
 //----------------------------------------------------------------------------//
@@ -89,6 +91,10 @@ void asm_eq(void);
 void asm_start_algo(ASTNode *node);
 void asm_end_algo();
 void asm_start_call_algo(info_algo *algo_info);
+
+//---- [UTILS          ] -----------------------------------------------------//
+//----------------------------------------------------------------------------//
+void asm_compute_var_addr(int offset, const char *dest_reg);
 
 #define toto
 
