@@ -10,6 +10,7 @@
   #include "ast.h"
   int yylex();
   void yyerror (char const *);
+  extern int yylineno;
   ASTNode *ast_root = nullptr; 
 %}
 
@@ -73,14 +74,14 @@ LINSTRU:
   ;
 
 INSTRU:
-  COND | LOOP_FOR_I | SETER | RETURNER;
+  COND | LOOP_FOR_I | SETER | RETURNER | EXEC_CALL;
 
 //---- [PARAM       ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
 PARAM:
   ID {
     symboletable_add_param($1, UNDEF);
-    $$ = make_var($1);
+    // $$ = make_var($1);
   }
   ;
 
@@ -150,6 +151,7 @@ EXPR:
 | INT           { $$ = make_const($1); }
 | TRUE          { $$ = make_true(); }
 | FALSE         { $$ = make_false(); }
+| ID            { $$ = make_var($1); } 
 ;
 
 LEXPR:
@@ -159,7 +161,10 @@ LEXPR:
 ;
 %%
 
-void yyerror (char const *s) {fprintf(stderr, "\033[1;31m[!] : %s\n\033[0m", s); exit(EXIT_FAILURE);}
+void yyerror (char const *s) {
+  fprintf(stderr, "\033[1;31m[!] Ligne %d : %s\n\033[0m", yylineno, s); 
+  exit(EXIT_FAILURE);
+}
 
 int main() {
   symboletable_init();

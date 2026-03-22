@@ -24,6 +24,8 @@ info_algo *symboletable_get(const char *id);
 // pointeur nul si id n'est pas présent dans les variables de la table de
 // symboles.
 info_var *symboletable_get_var(const char *id);
+info_var *symboletable_get_var_loc(const char *id);
+info_var *symboletable_get_var_param(const char *id);
 
 // symboletable_add_param : ajoute à l'algorithme courrant le paramètre id
 // de type type. Renvoie un pointeur nul en cas de dépassement de capacité.
@@ -38,5 +40,10 @@ void *symboletable_add_varloc(const char *id, type_s type);
 // symboletable_dispose : libère les ressources allouées à la table de
 // symboles.
 void symboletable_dispose(void);
+
+info_algo *symboletable_get_current();
+
+// Change l'algorithme courant
+void symboletable_set_current(const char *id);
 
 #endif

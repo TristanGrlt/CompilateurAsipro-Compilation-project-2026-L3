@@ -286,10 +286,6 @@ ASTNode *make_false() {
 
 void generate_asm(ASTNode *node) {
   if (node == nullptr) {
-    printf("\n\n----------------------\nErreur : Noeud AST nul\nRien n'as été "
-           "relié à ast_root\nIl faut "
-           "encore implémenter cette partie pour que le code présent ici "
-           "puisse être exécuté\n\n\n\n");
     return;
   }
   // printf("Noeud de type : %d\n", node->type);
@@ -298,17 +294,25 @@ void generate_asm(ASTNode *node) {
   case NODE_SET:
     _("SET");
     generate_asm(node->left);
-    info_var *var = symboletable_get_var(node->name);
-    if (var == nullptr) {
-      yyerror(
-          "Erreur interne : Impossible de trouver la variable dans la table "
-          "de symboles");
-      exit(EXIT_FAILURE);
+    info_var *var_loc2 = symboletable_get_var_loc(node->name);
+    info_algo *al2 = symboletable_get_current();
+
+    if (var_loc2 == nullptr) {
+      info_var *var_param = symboletable_get_var_param(node->name);
+      if (var_param == nullptr) {
+        yyerror("Variable non reconnue");
+        exit(EXIT_FAILURE);
+      }
+      _("Stockage valeur dans le paramètre");
+      asm_compute_var_addr(al2->nb_param - var_param->nb, cx);
+      pop(ax);
+      storew(ax, cx);
+    } else {
+      _("Stockage valeur dans la variable locale");
+      asm_compute_var_addr(var_loc2->nb + al2->nb_param, cx);
+      pop(ax);
+      storew(ax, cx);
     }
-    _("Stockage valeur dans la variable");
-    asm_compute_var_addr(var->nb, cx);
-    pop(ax);
-    storew(ax, cx);
     break;
   case NODE_ADD:
     generate_asm(node->left);
@@ -370,12 +374,34 @@ void generate_asm(ASTNode *node) {
     const_int(ax, node->val);
     push(ax);
     break;
+  case NODE_VAR:
+    info_var *var_loc = symboletable_get_var_loc(node->name);
+    info_algo *al = symboletable_get_current();
+
+    if (var_loc == nullptr) {
+      info_var *var_param = symboletable_get_var_param(node->name);
+      if (var_param == nullptr) {
+        yyerror("Variable non reconnue");
+        exit(EXIT_FAILURE);
+      }
+      _("Lecture du paramètre");
+      asm_compute_var_addr(al->nb_param - var_param->nb, ax);
+      loadw(bx, ax);
+      push(bx);
+    } else {
+      _("Lecture de la variable locale");
+      asm_compute_var_addr(var_loc->nb + al->nb_param, ax);
+      loadw(bx, ax);
+      push(bx);
+    }
+    break;
   case NODE_SEQ:
     generate_asm(node->left);
     generate_asm(node->right);
     break;
   case NODE_ALGO:
     _("ALGO");
+    symboletable_set_current(node->name);
     asm_start_algo(node);
     generate_asm(node->right);
     asm_end_algo();
@@ -388,16 +414,28 @@ void generate_asm(ASTNode *node) {
       exit(EXIT_FAILURE);
     }
     asm_start_call_algo(algo_info);
+    generate_asm(node->left);
+    // call algo
+    _("CALL DE L'ALGO");
+    const_string(ax, algo_info->id);
+    call(ax);
+
+    _("Restauration variable");
+    // On dépile les paramètres de la fonction APPELÉE
+    for (int i = 0; i < algo_info->nb_param + algo_info->nb_varloc; ++i) {
+      pop(ax);
+    }
     break;
   case NODE_RETURN:
-    //  ATTENTION, PAS LA BONNE LOGIQUE APPLIQUÉ ICI. JUSTE POUR DU TEST
     _("RETURN");
+    info_algo *al4 = symboletable_get_current();
     generate_asm(node->left);
     pop(ax);
-    cp(bx, bp);
-    const_int(cx, 2);
-    add(bx, cx);
-    storew(ax, bx);
+
+    // L'emplacement de retour est 1 élément plus bas que la première variable
+    // locale
+    asm_compute_var_addr(al4->nb_param + al4->nb_varloc + 1, cx);
+    storew(ax, cx);
     asm_end_algo();
     break;
   case NODE_PROGRAM:

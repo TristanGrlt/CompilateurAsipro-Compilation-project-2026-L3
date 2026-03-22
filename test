@@ -1,5 +1,17 @@
 \begin{algo}{func}{ma_var, truc, muche, bidule}
   \SET{a}{100 + 100 - 50}
-  \RETURN{123}
+  \SET{b}{a + 50}
+  \SET{b}{b * 2}
+  
+  \RETURN{ma_var + b}
 \end{algo}
-\CALL{func}{45, 6, 3, 45}
+
+\begin{algo}{test}{}
+  \SET{a}{45}
+  \SET{b}{5}
+  \SET{c}{5}
+  \SET{d}{45}
+  \RETURN{a + b + c + d}
+\end{algo}
+
+\CALL{func}{100, 50, 100, 150}

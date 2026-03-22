@@ -64,6 +64,8 @@ info_algo *symboletable_get(const char *id) {
   return hashtable_search(symboletable, id);
 }
 
+info_algo *symboletable_get_current() { return current_algo; }
+
 void symboletable_dispose(void) {
   if (symboletable != nullptr) {
     hashtable_dispose(&symboletable);
@@ -122,6 +124,25 @@ void *symboletable_add_varloc(const char *id, type_s type) {
   return var;
 }
 
+info_var *symboletable_get_var_loc(const char *id) {
+  if (current_algo == nullptr) {
+    return nullptr;
+  }
+  if (symboletable == nullptr) {
+    return nullptr;
+  }
+  return hashtable_search(current_algo->varloc, id);
+}
+info_var *symboletable_get_var_param(const char *id) {
+  if (current_algo == nullptr) {
+    return nullptr;
+  }
+  if (symboletable == nullptr) {
+    return nullptr;
+  }
+  return hashtable_search(current_algo->param, id);
+}
+
 info_var *symboletable_get_var(const char *id) {
   if (current_algo == nullptr) {
     return nullptr;
@@ -134,4 +155,8 @@ info_var *symboletable_get_var(const char *id) {
     return var;
   }
   return hashtable_search(current_algo->param, id);
+}
+
+void symboletable_set_current(const char *id) {
+  current_algo = symboletable_get(id);
 }

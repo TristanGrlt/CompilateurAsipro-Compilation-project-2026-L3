@@ -178,10 +178,6 @@ void asm_start_call_algo(info_algo *algo_info) {
     push(ax);
   }
   // Évaluer et empiler les arguments
-  // A FAIRE
-  // Appeler l'algorithme
-  const_string(ax, algo_info->id);
-  call(ax);
 }
 
 void asm_compute_var_addr(int offset, const char *dest_reg) {
