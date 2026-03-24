@@ -1,17 +1,48 @@
-\begin{algo}{func}{ma_var, truc, muche, bidule}
-  \SET{a}{100 + 100 - 50}
-  \SET{b}{a + 50}
-  \SET{b}{b * 2}
-  
-  \RETURN{ma_var + b}
+\begin{algo}{fibonacci}{n}
+    \IF { n <= 1 }
+        \RETURN { n }
+    \ELSE
+        \RETURN { \CALL{fibonacci}{n - 1} + \CALL{fibonacci}{n - 2} }
+    \FI
 \end{algo}
 
-\begin{algo}{test}{}
-  \SET{a}{45}
-  \SET{b}{5}
-  \SET{c}{5}
-  \SET{d}{45}
-  \RETURN{a + b + c + d}
+\begin{algo}{fact_iter}{n}
+    \SET { res } { 1 }
+    \SET { i } { 1 }
+    \DOWHILE { i <= n }
+        \SET { res } { res * i }
+        \SET { i } { i + 1 }
+    \OD
+    \RETURN { res }
 \end{algo}
 
-\CALL{func}{100, 50, 100, 150}
+\begin{algo}{sum_evens}{start, end}
+    \SET { sum } { 0 }
+    \DOFORI { i } { start } { end }
+        \SET { rem } { i - ((i / 2) * 2) }
+        \IF { rem = 0 }
+            \SET { sum } { sum + i }
+        \FI
+    \OD
+    \RETURN { sum }
+\end{algo}
+
+\begin{algo}{math_stress}{a, b, c}
+    \SET { x } { a * b }
+    \SET { y } { c / 2 }
+    \SET { z } { x + y - a }
+    \RETURN { z }
+\end{algo}
+
+\begin{algo}{main_algo}{dummy}
+    \COM{f result should be 610}
+    \SET { f } { \CALL{fibonacci}{15} }
+    \SET { it } { \CALL{fact_iter}{4} }
+    \SET { se } { \CALL{sum_evens}{1, 5} }
+    
+    \COM{ms result should be 187}
+    \SET { ms } { \CALL{math_stress}{f, it, se} }
+    \RETURN { f }
+\end{algo}
+
+\CALL{main_algo}{0}

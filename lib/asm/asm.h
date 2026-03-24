@@ -43,6 +43,7 @@ void asm_gt(void);
 void asm_geq(void);
 void asm_leq(void);
 void asm_eq(void);
+char *get_label(const char *prefix);
 
 //---- [COMPARAISON ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//

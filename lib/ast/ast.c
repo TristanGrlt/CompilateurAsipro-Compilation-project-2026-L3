@@ -235,21 +235,51 @@ ASTNode *make_algo(char *name, ASTNode *params, ASTNode *body) {
 }
 
 ASTNode *make_call(char *func_name, ASTNode *arg) {
+  info_algo *algo_info = symboletable_get(func_name);
+  if (algo_info == nullptr) {
+    yyerror("Appel d'un algorithme non défini");
+    exit(EXIT_FAILURE);
+  }
+
   ASTNode *node = create_node(NODE_CALL);
   if (node == nullptr) {
     return nullptr;
   }
   node->name = func_name;
   node->left = arg;
+  node->expr_type = algo_info->type;
+
+  /* * ATTENTION (Cas particulier de la récursivité) :
+   * Si l'algorithme s'appelle lui-même AVANT que le parseur n'ait rencontré
+   * son instruction RETURN, le type sera toujours UNDEF.
+   * Dans ce cas, on peut postuler temporairement que c'est un INT_T.
+   */
+  if (node->expr_type == UNDEF) {
+    node->expr_type = INT_T;
+  }
+
   return node;
 }
 
 ASTNode *make_return(ASTNode *expr) {
+  // Set type
+  info_algo *current_algo = symboletable_get_current();
+  if (current_algo != nullptr) {
+    if (current_algo->type == UNDEF) {
+      current_algo->type = expr->expr_type; // Inférence du type
+    } else if (current_algo->type != expr->expr_type) {
+      yyerror("Erreur de type : Le type de retour ne correspond pas aux "
+              "retours précédents");
+      exit(EXIT_FAILURE);
+    }
+  }
+
   ASTNode *node = create_node(NODE_RETURN);
   if (node == nullptr) {
     return nullptr;
   }
   node->left = expr;
+  node->expr_type = expr->expr_type;
   return node;
 }
 
@@ -284,6 +314,62 @@ ASTNode *make_false() {
   return node;
 }
 
+ASTNode *make_if(ASTNode *condition, ASTNode *if_block, ASTNode *else_block) {
+  if (condition->expr_type != BOOL_T) {
+    yyerror("Erreur de type : La condition du IF doit être un booléen");
+    exit(EXIT_FAILURE);
+  }
+
+  ASTNode *node = create_node(NODE_IF);
+  if (node == nullptr) {
+    return nullptr;
+  }
+
+  node->left = condition;
+  node->middle = if_block;
+  node->right = else_block;
+
+  return node;
+}
+
+ASTNode *make_dowhile(ASTNode *condition, ASTNode *body) {
+  if (condition->expr_type != BOOL_T) {
+    yyerror("Erreur de type : La condition du WHILE doit être un booléen");
+    exit(EXIT_FAILURE);
+  }
+
+  ASTNode *node = create_node(NODE_DOWHILE);
+  if (node == nullptr) {
+    return nullptr;
+  }
+
+  node->left = condition;
+  node->right = body;
+
+  return node;
+}
+
+ASTNode *make_fori(char *var_name, ASTNode *start_expr, ASTNode *end_expr,
+                   ASTNode *body) {
+  if (start_expr->expr_type != INT_T || end_expr->expr_type != INT_T) {
+    yyerror("Erreur de type : Les bornes du FORI doivent être des entiers");
+    exit(EXIT_FAILURE);
+  }
+
+  ASTNode *init = make_set(var_name, start_expr);
+  ASTNode *var_cond = make_var(var_name);
+  var_cond->expr_type = INT_T;
+  ASTNode *condition = make_leq(var_cond, end_expr);
+  ASTNode *var_inc = make_var(var_name);
+  var_inc->expr_type = INT_T;
+  ASTNode *un = make_const(1);
+  ASTNode *addition = make_add(var_inc, un);
+  ASTNode *increment = make_set(var_name, addition);
+  ASTNode *new_body = make_seq(body, increment);
+  ASTNode *boucle = make_dowhile(condition, new_body);
+  return make_seq(init, boucle);
+}
+
 void generate_asm(ASTNode *node) {
   if (node == nullptr) {
     return;
@@ -291,7 +377,7 @@ void generate_asm(ASTNode *node) {
   // printf("Noeud de type : %d\n", node->type);
   switch (node->type) {
 
-  case NODE_SET:
+  case NODE_SET: {
     _("SET");
     generate_asm(node->left);
     info_var *var_loc2 = symboletable_get_var_loc(node->name);
@@ -304,15 +390,69 @@ void generate_asm(ASTNode *node) {
         exit(EXIT_FAILURE);
       }
       _("Stockage valeur dans le paramètre");
-      asm_compute_var_addr(al2->nb_param - var_param->nb, cx);
+      asm_compute_var_addr(al2->nb_param - var_param->nb,
+                           cx); // Formule Paramètre
       pop(ax);
       storew(ax, cx);
     } else {
       _("Stockage valeur dans la variable locale");
-      asm_compute_var_addr(var_loc2->nb + al2->nb_param, cx);
+      asm_compute_var_addr(al2->nb_param + al2->nb_varloc - var_loc2->nb + 1,
+                           cx); // Formule Locale
       pop(ax);
       storew(ax, cx);
     }
+    break;
+  }
+  case NODE_DOWHILE:
+    _("BOUCLE DOWHILE");
+    char *l_start = get_label("start_while");
+    char *l_end = get_label("end_while");
+    label(l_start);
+    generate_asm(node->left);
+    pop(ax);
+    const_string(cx, l_end);
+    const_int(bx, 0);
+    cmp(ax, bx);
+    jmpc(cx);
+
+    if (node->right != nullptr) {
+      generate_asm(node->right);
+    }
+    const_string(cx, l_start);
+    jmp(cx);
+    label(l_end);
+    free(l_start);
+    free(l_end);
+    break;
+  case NODE_IF:
+    char *l_else = get_label("else");
+    char *l_end2 = get_label("end_if");
+
+    generate_asm(node->left);
+
+    pop(ax);
+    const_string(cx, l_else);
+    const_int(bx, 0);
+    cmp(ax, bx);
+
+    jmpc(cx);
+
+    if (node->middle != nullptr) {
+      generate_asm(node->middle);
+    }
+
+    const_string(cx, l_end2);
+    jmp(cx);
+
+    label(l_else);
+    if (node->right != nullptr) {
+      generate_asm(node->right);
+    }
+
+    label(l_end2);
+
+    free(l_else);
+    free(l_end2);
     break;
   case NODE_ADD:
     generate_asm(node->left);
@@ -374,7 +514,7 @@ void generate_asm(ASTNode *node) {
     const_int(ax, node->val);
     push(ax);
     break;
-  case NODE_VAR:
+  case NODE_VAR: {
     info_var *var_loc = symboletable_get_var_loc(node->name);
     info_algo *al = symboletable_get_current();
 
@@ -390,11 +530,12 @@ void generate_asm(ASTNode *node) {
       push(bx);
     } else {
       _("Lecture de la variable locale");
-      asm_compute_var_addr(var_loc->nb + al->nb_param, ax);
+      asm_compute_var_addr(al->nb_param + al->nb_varloc - var_loc->nb + 1, ax);
       loadw(bx, ax);
       push(bx);
     }
     break;
+  }
   case NODE_SEQ:
     generate_asm(node->left);
     generate_asm(node->right);

@@ -22,7 +22,9 @@ typedef enum {
   NODE_CALL,   // (\CALL)
   NODE_RETURN, // (\RETURN)
   NODE_ALGO,   // (begin{algo})
-  NODE_SEQ     // (le bloc de code)
+  NODE_SEQ,    // (le bloc de code)
+  NODE_IF,
+  NODE_DOWHILE,
 } NodeType;
 
 typedef struct ASTNode {
@@ -33,6 +35,7 @@ typedef struct ASTNode {
   type_s expr_type;
 
   struct ASTNode *left;
+  struct ASTNode *middle;
   struct ASTNode *right;
 } ASTNode;
 
@@ -55,6 +58,10 @@ ASTNode *make_call(char *func_name, ASTNode *arg);
 ASTNode *make_return(ASTNode *expr);
 ASTNode *make_algo(char *name, ASTNode *params, ASTNode *body);
 ASTNode *make_seq(ASTNode *instr, ASTNode *next);
+ASTNode *make_if(ASTNode *condition, ASTNode *if_block, ASTNode *else_block);
+ASTNode *make_fori(char *var_name, ASTNode *start_expr, ASTNode *end_expr,
+                   ASTNode *body);
+ASTNode *make_dowhile(ASTNode *condition, ASTNode *body);
 
 void generate_asm(ASTNode *node);
 #endif

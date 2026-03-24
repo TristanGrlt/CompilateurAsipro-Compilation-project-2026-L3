@@ -74,7 +74,7 @@ LINSTRU:
   ;
 
 INSTRU:
-  COND | LOOP_FOR_I | SETER | RETURNER | EXEC_CALL;
+  COND | LOOP_FOR_I | SETER | RETURNER | LOOP_DOWHILE;
 
 //---- [PARAM       ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
@@ -104,24 +104,35 @@ SETER:
 LOOP_FOR_I:
   FORI '{' ID '}' '{' EXPR '}' '{' EXPR '}'
     LINSTRU
-  OD; 
+  OD {
+    // $3 = ID (le nom de la variable)
+    // $6 = EXPR (la borne de départ)
+    // $9 = EXPR (la borne de fin)
+    // $11 = LINSTRU (le corps de la boucle)
+    $$ = make_fori($3, $6, $9, $11);
+  };
 
 //---- [BOULCE FORI ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
 LOOP_DOWHILE:
   DOWHILE '{' EXPR '}'
     LINSTRU
-  OD;
+  OD {
+    $$ = make_dowhile($3, $5);
+  };
 
 //---- [COND        ] --------------------------------------------------------//
 //----------------------------------------------------------------------------//
 COND :
   IF '{' EXPR '}'
     LINSTRU
-  NEXT_IF FI;
+  NEXT_IF FI {
+    $$ = make_if($3, $5, $6);
+  };
 
 NEXT_IF:
-  ELSE LINSTRU | ;
+  ELSE LINSTRU { $$ = $2; } 
+  |            { $$ = nullptr; } ;
 
 //---- [CALL       ] ---------------------------------------------------------//
 //----------------------------------------------------------------------------//
@@ -151,7 +162,8 @@ EXPR:
 | INT           { $$ = make_const($1); }
 | TRUE          { $$ = make_true(); }
 | FALSE         { $$ = make_false(); }
-| ID            { $$ = make_var($1); } 
+| ID            { $$ = make_var($1); }
+| EXEC_CALL     { $$ = $1; }
 ;
 
 LEXPR:
