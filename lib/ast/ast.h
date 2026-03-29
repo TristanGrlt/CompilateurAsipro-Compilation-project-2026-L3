@@ -62,6 +62,7 @@ ASTNode *make_if(ASTNode *condition, ASTNode *if_block, ASTNode *else_block);
 ASTNode *make_fori(char *var_name, ASTNode *start_expr, ASTNode *end_expr,
                    ASTNode *body);
 ASTNode *make_dowhile(ASTNode *condition, ASTNode *body);
+void free_ast(ASTNode *node);
 
 void generate_asm(ASTNode *node);
 #endif

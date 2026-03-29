@@ -65,12 +65,14 @@ typedef struct hashtable hashtable;
 //    dépassement de capacité. Renvoie sinon un pointeur vers le contrôleur
 //    associé à la table.
 extern hashtable *hashtable_empty(int (*compar)(const void *, const void *),
-    size_t (*hashfun)(const void *), double loadfactmax);
+                                  size_t (*hashfun)(const void *),
+                                  double loadfactmax);
 
 //  hashtable_dispose : sans effet si *htptr vaut un pointeur nul. Libère sinon
 //    les ressources allouées à la gestion de la table de hachage associée à
 //    *htptr puis affecte un pointeur nul à *htptr.
-extern void hashtable_dispose(hashtable **htptr);
+void hashtable_dispose(hashtable **htptr, void (*free_key)(void *),
+                       void (*free_val)(void *));
 
 //  hashtable_add : renvoie un pointeur nul si valref vaut un pointeur nul.
 //    Recherche sinon dans la table de hachage associée à ht la référence d'une
@@ -81,7 +83,7 @@ extern void hashtable_dispose(hashtable **htptr);
 //    couple (keyref, valref) à la table ; renvoie un pointeur nul en cas de
 //    dépassement de capacité ; renvoie sinon valref.
 extern void *hashtable_add(hashtable *ht, const void *keyref,
-    const void *valref);
+                           const void *valref);
 
 //  hashtable_remove : recherche dans la table de hachage associée à ht la
 //    référence d'une clé égale à celle de référence keyref au sens de la
@@ -114,15 +116,15 @@ extern void *hashtable_search(hashtable *ht, const void *keyref);
 //  struct hashtable_stats : structure regroupant quelques informations qui
 //    constituent un bilan de santé d'une table de hachage.
 struct hashtable_stats {
-  size_t nslots;    //  nombre de compartiments
-  size_t nentries;  //  nombre de clés
-  double lfmax;     //  taux de remplissage maximum toléré
-  double lfcurr;    //  taux de remplissage courant
-  size_t maxlen;    //  maximum des longueurs des listes
-  double postheo;   //  nombre moyen théorique de comparaisons dans le cas d'une
-                    //    recherche positive
-  double poscurr;   //  nombre moyen courant de comparaisons dans le cas d'une
-                    //    recherche positive
+  size_t nslots;   //  nombre de compartiments
+  size_t nentries; //  nombre de clés
+  double lfmax;    //  taux de remplissage maximum toléré
+  double lfcurr;   //  taux de remplissage courant
+  size_t maxlen;   //  maximum des longueurs des listes
+  double postheo;  //  nombre moyen théorique de comparaisons dans le cas d'une
+                   //    recherche positive
+  double poscurr;  //  nombre moyen courant de comparaisons dans le cas d'une
+                   //    recherche positive
 };
 
 //  hashtable_get_stats : effectue un bilan de santé pour la table de hachage

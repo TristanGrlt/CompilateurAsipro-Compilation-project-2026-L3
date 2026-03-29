@@ -3,18 +3,16 @@
 #include "symboletable.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 extern void yyerror(const char *s);
 
 ASTNode *create_node(NodeType type) {
-  ASTNode *node = malloc(sizeof(ASTNode));
+  ASTNode *node = calloc(1, sizeof(ASTNode));
   if (node == nullptr) {
     return nullptr;
   }
   node->type = type;
-  node->left = nullptr;
-  node->right = nullptr;
-  node->name = nullptr;
   return node;
 }
 
@@ -357,17 +355,40 @@ ASTNode *make_fori(char *var_name, ASTNode *start_expr, ASTNode *end_expr,
   }
 
   ASTNode *init = make_set(var_name, start_expr);
-  ASTNode *var_cond = make_var(var_name);
+
+  ASTNode *var_cond = make_var(strdup(var_name));
   var_cond->expr_type = INT_T;
   ASTNode *condition = make_leq(var_cond, end_expr);
-  ASTNode *var_inc = make_var(var_name);
+
+  ASTNode *var_inc = make_var(strdup(var_name));
   var_inc->expr_type = INT_T;
   ASTNode *un = make_const(1);
   ASTNode *addition = make_add(var_inc, un);
-  ASTNode *increment = make_set(var_name, addition);
+
+  ASTNode *increment = make_set(strdup(var_name), addition);
+
   ASTNode *new_body = make_seq(body, increment);
   ASTNode *boucle = make_dowhile(condition, new_body);
+
   return make_seq(init, boucle);
+}
+
+void free_ast(ASTNode *node) {
+  if (node == nullptr)
+    return;
+
+  free_ast(node->left);
+  free_ast(node->middle);
+  free_ast(node->right);
+
+  if (node->type == NODE_VAR || node->type == NODE_CALL ||
+      node->type == NODE_ALGO || node->type == NODE_SET) {
+    if (node->name != nullptr) {
+      free(node->name);
+    }
+  }
+
+  free(node);
 }
 
 void generate_asm(ASTNode *node) {

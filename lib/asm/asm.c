@@ -64,6 +64,8 @@ void asm_lt(void) {
   const_int(ax, 1);
   label(end_lt);
   push(ax);
+  free(is_lt);
+  free(end_lt);
 }
 
 void asm_gt(void) {
@@ -82,6 +84,8 @@ void asm_gt(void) {
   const_int(ax, 1);
   label(end_gt);
   push(ax);
+  free(is_gt);
+  free(end_gt);
 }
 
 void asm_geq(void) {
@@ -102,6 +106,8 @@ void asm_geq(void) {
   const_int(ax, 1);
   label(end_geq);
   push(ax);
+  free(is_geq);
+  free(end_geq);
 }
 
 void asm_leq(void) {
@@ -122,6 +128,8 @@ void asm_leq(void) {
   const_int(ax, 1);
   label(end_leq);
   push(ax);
+  free(is_leq);
+  free(end_leq);
 }
 
 void asm_eq(void) {
@@ -140,6 +148,8 @@ void asm_eq(void) {
   const_int(ax, 1);
   label(end_eq);
   push(ax);
+  free(is_eq);
+  free(end_eq);
 }
 
 void asm_start_algo(ASTNode *node) {

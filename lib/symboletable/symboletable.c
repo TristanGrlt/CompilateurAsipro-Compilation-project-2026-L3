@@ -66,12 +66,6 @@ info_algo *symboletable_get(const char *id) {
 
 info_algo *symboletable_get_current() { return current_algo; }
 
-void symboletable_dispose(void) {
-  if (symboletable != nullptr) {
-    hashtable_dispose(&symboletable);
-  }
-}
-
 void *symboletable_add_param(const char *id, type_s type) {
   if (current_algo == nullptr) {
     return nullptr;
@@ -159,4 +153,23 @@ info_var *symboletable_get_var(const char *id) {
 
 void symboletable_set_current(const char *id) {
   current_algo = symboletable_get(id);
+}
+
+static void free_info_var(void *ptr) {
+  info_var *v = (info_var *)ptr;
+  free(v->id);
+  free(v);
+}
+
+static void free_info_algo(void *ptr) {
+  info_algo *algo = (info_algo *)ptr;
+  hashtable_dispose(&(algo->param), NULL, free_info_var);
+  hashtable_dispose(&(algo->varloc), NULL, free_info_var);
+  free(algo);
+}
+
+void symboletable_dispose(void) {
+  if (symboletable != nullptr) {
+    hashtable_dispose(&symboletable, NULL, free_info_algo);
+  }
 }

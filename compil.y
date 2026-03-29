@@ -10,6 +10,8 @@
   #include "ast.h"
   int yylex();
   void yyerror (char const *);
+  extern int yylex_destroy(void);
+  void cleanup(void);
   extern int yylineno;
   ASTNode *ast_root = nullptr; 
 %}
@@ -81,7 +83,8 @@ INSTRU:
 PARAM:
   ID {
     symboletable_add_param($1, UNDEF);
-    // $$ = make_var($1);
+    free($1);
+    $$ = nullptr;
   }
   ;
 
@@ -175,10 +178,18 @@ LEXPR:
 
 void yyerror (char const *s) {
   fprintf(stderr, "\033[1;31m[!] Ligne %d : %s\n\033[0m", yylineno, s); 
-  exit(EXIT_FAILURE);
+}
+
+void cleanup(void) {
+  if (ast_root != nullptr) {
+      free_ast(ast_root);
+  }
+  symboletable_dispose();
+  yylex_destroy();
 }
 
 int main() {
+  atexit(cleanup);
   symboletable_init();
   if (yyparse() == 0) {
     printf("\tconst ax,main\n");
