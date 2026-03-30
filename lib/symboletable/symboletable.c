@@ -37,6 +37,7 @@ void *symboletable_add(const char *id) {
   algo->type = UNDEF;
   algo->nb_param = 0;
   algo->nb_varloc = 0;
+  algo->param_types = NULL;
   algo->param = hashtable_empty((int (*)(const void *, const void *))strcmp,
                                 (size_t(*)(const void *))str_hashfun, 1.0);
   algo->varloc = hashtable_empty((int (*)(const void *, const void *))strcmp,
@@ -73,12 +74,22 @@ void *symboletable_add_param(const char *id, type_s type) {
   if (symboletable == nullptr) {
     return nullptr;
   }
+
+  int param_index = current_algo->nb_param;
+  type_s *new_param_types = realloc(current_algo->param_types,
+                                    (size_t)(param_index + 1) * sizeof(type_s));
+  if (new_param_types == nullptr) {
+    return nullptr;
+  }
+  current_algo->param_types = new_param_types;
+  current_algo->param_types[param_index] = type;
+
   info_var *var = malloc(sizeof(*var));
   if (var == nullptr) {
     return nullptr;
   }
   var->id = strdup(id);
-  var->nb = current_algo->nb_param++;
+  var->nb = param_index;
   var->type = type;
   void *r = hashtable_add(current_algo->param, var->id, var);
   if (r != var) {
@@ -86,6 +97,7 @@ void *symboletable_add_param(const char *id, type_s type) {
     free(var);
     return nullptr;
   }
+  current_algo->nb_param++;
   printf(";symboletable_add_param : %s type : %d\n", id, type);
   return var;
 }
@@ -165,6 +177,7 @@ static void free_info_algo(void *ptr) {
   info_algo *algo = (info_algo *)ptr;
   hashtable_dispose(&(algo->param), NULL, free_info_var);
   hashtable_dispose(&(algo->varloc), NULL, free_info_var);
+  free(algo->param_types);
   free(algo);
 }
 

@@ -7,6 +7,96 @@
 
 extern void yyerror(const char *s);
 
+static const char *type_to_string(type_s type) {
+  switch (type) {
+  case INT_T:
+    return "entier";
+  case BOOL_T:
+    return "booléen";
+  case UNDEF:
+    return "indéfini";
+  default:
+    return "inconnu";
+  }
+}
+
+static void yyerror_binary_types(const char *context, ASTNode *left,
+                                 ASTNode *right, const char *expected) {
+  char message[256];
+  snprintf(message, sizeof(message),
+           "Erreur de type : %s (attendu : %s, obtenu : gauche=%s, droite=%s)",
+           context, expected, type_to_string(left->expr_type),
+           type_to_string(right->expr_type));
+  yyerror(message);
+}
+
+static void yyerror_unary_type(const char *context, ASTNode *node,
+                               type_s expected) {
+  char message[256];
+  snprintf(message, sizeof(message),
+           "Erreur de type : %s (attendu : %s, obtenu : %s)", context,
+           type_to_string(expected), type_to_string(node->expr_type));
+  yyerror(message);
+}
+
+static void sync_param_type_if_needed(info_var *var) {
+  if (var == nullptr) {
+    return;
+  }
+  info_algo *current = symboletable_get_current();
+  if (current == nullptr || current->param_types == nullptr) {
+    return;
+  }
+  info_var *param_var = symboletable_get_var_param(var->id);
+  if (param_var == var && param_var->nb >= 0 &&
+      param_var->nb < current->nb_param) {
+    current->param_types[param_var->nb] = param_var->type;
+  }
+}
+
+static void validate_call_args_rec(info_algo *algo_info, ASTNode *arg,
+                                   int *arg_index) {
+  if (arg == nullptr) {
+    return;
+  }
+  if (arg->type == NODE_SEQ) {
+    validate_call_args_rec(algo_info, arg->left, arg_index);
+    validate_call_args_rec(algo_info, arg->right, arg_index);
+    return;
+  }
+
+  if (*arg_index >= algo_info->nb_param) {
+    char message[256];
+    snprintf(message, sizeof(message),
+             "Erreur d'appel : trop d'arguments pour '%s' (attendu : %d)",
+             algo_info->id, algo_info->nb_param);
+    yyerror(message);
+    exit(EXIT_FAILURE);
+  }
+
+  type_s expected_type = UNDEF;
+  if (algo_info->param_types != nullptr) {
+    expected_type = algo_info->param_types[*arg_index];
+  }
+
+  if (expected_type == UNDEF) {
+    if (algo_info->param_types != nullptr) {
+      algo_info->param_types[*arg_index] = arg->expr_type;
+    }
+  } else if (arg->expr_type != expected_type) {
+    char message[256];
+    snprintf(message, sizeof(message),
+             "Erreur d'appel : type invalide pour l'argument %d de '%s' "
+             "(attendu : %s, obtenu : %s)",
+             *arg_index + 1, algo_info->id, type_to_string(expected_type),
+             type_to_string(arg->expr_type));
+    yyerror(message);
+    exit(EXIT_FAILURE);
+  }
+
+  (*arg_index)++;
+}
+
 ASTNode *create_node(NodeType type) {
   ASTNode *node = calloc(1, sizeof(ASTNode));
   if (node == nullptr) {
@@ -47,14 +137,51 @@ ASTNode *make_var(char *name) {
     return nullptr;
   }
   node->name = name;
+  info_var *var = symboletable_get_var(name);
+  if (var == nullptr) {
+    char message[256];
+    snprintf(message, sizeof(message), "Variable '%s' non déclarée", name);
+    yyerror(message);
+    exit(EXIT_FAILURE);
+  }
+  node->expr_type = var->type;
+
   return node;
+}
+
+static void force_type(ASTNode *node, type_s exp_type) {
+  if (node->type == NODE_VAR && node->expr_type == UNDEF) {
+    info_var *var = symboletable_get_var(node->name);
+    if (var == nullptr) {
+      char message[256];
+      snprintf(message, sizeof(message), "Variable '%s' non déclarée",
+               node->name);
+      yyerror(message);
+      exit(EXIT_FAILURE);
+    }
+    if (var->type == UNDEF) {
+      var->type = exp_type;
+      sync_param_type_if_needed(var);
+    } else if (var->type != exp_type) {
+      char message[256];
+      snprintf(message, sizeof(message),
+               "Erreur de type : la variable '%s' est de type %s mais est "
+               "utilisée comme %s",
+               node->name, type_to_string(var->type), type_to_string(exp_type));
+      yyerror(message);
+      exit(EXIT_FAILURE);
+    }
+    node->expr_type = var->type;
+  }
 }
 
 // Opération :
 
 ASTNode *make_add(ASTNode *left, ASTNode *right) {
+  force_type(left, INT_T);
+  force_type(right, INT_T);
   if (left->expr_type != INT_T || right->expr_type != INT_T) {
-    yyerror("Erreur de type : Addition uniquement entre entiers");
+    yyerror_binary_types("Addition", left, right, "entier + entier");
     exit(EXIT_FAILURE);
   }
   ASTNode *node = create_node(NODE_ADD);
@@ -68,8 +195,10 @@ ASTNode *make_add(ASTNode *left, ASTNode *right) {
 }
 
 ASTNode *make_sub(ASTNode *left, ASTNode *right) {
+  force_type(left, INT_T);
+  force_type(right, INT_T);
   if (left->expr_type != INT_T || right->expr_type != INT_T) {
-    yyerror("Erreur de type : Soustraction uniquement entre entiers");
+    yyerror_binary_types("Soustraction", left, right, "entier - entier");
     exit(EXIT_FAILURE);
   }
   ASTNode *node = create_node(NODE_SUB);
@@ -83,8 +212,10 @@ ASTNode *make_sub(ASTNode *left, ASTNode *right) {
 }
 
 ASTNode *make_mul(ASTNode *left, ASTNode *right) {
+  force_type(left, INT_T);
+  force_type(right, INT_T);
   if (left->expr_type != INT_T || right->expr_type != INT_T) {
-    yyerror("Erreur de type : Multiplication uniquement entre entiers");
+    yyerror_binary_types("Multiplication", left, right, "entier * entier");
     exit(EXIT_FAILURE);
   }
   ASTNode *node = create_node(NODE_MUL);
@@ -98,8 +229,10 @@ ASTNode *make_mul(ASTNode *left, ASTNode *right) {
 }
 
 ASTNode *make_div(ASTNode *left, ASTNode *right) {
+  force_type(left, INT_T);
+  force_type(right, INT_T);
   if (left->expr_type != INT_T || right->expr_type != INT_T) {
-    yyerror("Erreur de type : Division uniquement entre entiers");
+    yyerror_binary_types("Division", left, right, "entier / entier");
     exit(EXIT_FAILURE);
   }
   ASTNode *node = create_node(NODE_DIV);
@@ -113,8 +246,10 @@ ASTNode *make_div(ASTNode *left, ASTNode *right) {
 }
 
 ASTNode *make_lt(ASTNode *left, ASTNode *right) {
+  force_type(left, INT_T);
+  force_type(right, INT_T);
   if (left->expr_type != INT_T || right->expr_type != INT_T) {
-    yyerror("Erreur de type : Comparaison uniquement entre entiers");
+    yyerror_binary_types("Comparaison '<'", left, right, "entier < entier");
     exit(EXIT_FAILURE);
   }
   ASTNode *node = create_node(NODE_LT);
@@ -128,8 +263,10 @@ ASTNode *make_lt(ASTNode *left, ASTNode *right) {
 }
 
 ASTNode *make_gt(ASTNode *left, ASTNode *right) {
+  force_type(left, INT_T);
+  force_type(right, INT_T);
   if (left->expr_type != INT_T || right->expr_type != INT_T) {
-    yyerror("Erreur de type : Comparaison uniquement entre entiers");
+    yyerror_binary_types("Comparaison '>'", left, right, "entier > entier");
     exit(EXIT_FAILURE);
   }
   ASTNode *node = create_node(NODE_GT);
@@ -143,8 +280,10 @@ ASTNode *make_gt(ASTNode *left, ASTNode *right) {
 }
 
 ASTNode *make_geq(ASTNode *left, ASTNode *right) {
+  force_type(left, INT_T);
+  force_type(right, INT_T);
   if (left->expr_type != INT_T || right->expr_type != INT_T) {
-    yyerror("Erreur de type : Comparaison uniquement entre entiers");
+    yyerror_binary_types("Comparaison '>='", left, right, "entier >= entier");
     exit(EXIT_FAILURE);
   }
   ASTNode *node = create_node(NODE_GEQ);
@@ -158,8 +297,10 @@ ASTNode *make_geq(ASTNode *left, ASTNode *right) {
 }
 
 ASTNode *make_leq(ASTNode *left, ASTNode *right) {
+  force_type(left, INT_T);
+  force_type(right, INT_T);
   if (left->expr_type != INT_T || right->expr_type != INT_T) {
-    yyerror("Erreur de type : Comparaison uniquement entre entiers");
+    yyerror_binary_types("Comparaison '<='", left, right, "entier <= entier");
     exit(EXIT_FAILURE);
   }
   ASTNode *node = create_node(NODE_LEQ);
@@ -173,10 +314,17 @@ ASTNode *make_leq(ASTNode *left, ASTNode *right) {
 }
 
 ASTNode *make_eq(ASTNode *left, ASTNode *right) {
-  if (!(left->expr_type == INT_T && right->expr_type == INT_T) ||
-      !(left->expr_type != BOOL_T && right->expr_type != BOOL_T)) {
-    yyerror("Erreur de type : Comparaison uniquement entre deux entiers ou "
-            "booleens");
+  if (left->expr_type == UNDEF && right->expr_type != UNDEF) {
+    force_type(left, right->expr_type);
+  } else if (right->expr_type == UNDEF && left->expr_type != UNDEF) {
+    force_type(right, left->expr_type);
+  } else if (left->expr_type == UNDEF && right->expr_type == UNDEF) {
+    force_type(left, INT_T);
+    force_type(right, INT_T);
+  }
+  if (left->expr_type != right->expr_type) {
+    yyerror_binary_types("Comparaison '='", left, right,
+                         "même type des deux côtés");
     exit(EXIT_FAILURE);
   }
   ASTNode *node = create_node(NODE_EQ);
@@ -204,9 +352,15 @@ ASTNode *make_set(char *var_name, ASTNode *expr) {
     // correspond
     if (var->type == UNDEF) {
       var->type = expr->expr_type;
+      sync_param_type_if_needed(var);
     } else if (var->type != expr->expr_type) {
-      yyerror("Erreur de type : Tentative d'affecter une expression de type "
-              "différent à la variable");
+      char message[256];
+      snprintf(message, sizeof(message),
+               "Erreur de type : affectation invalide sur '%s' (attendu : %s, "
+               "obtenu : %s)",
+               var_name, type_to_string(var->type),
+               type_to_string(expr->expr_type));
+      yyerror(message);
       exit(EXIT_FAILURE);
     }
   }
@@ -239,6 +393,18 @@ ASTNode *make_call(char *func_name, ASTNode *arg) {
     exit(EXIT_FAILURE);
   }
 
+  int arg_count = 0;
+  validate_call_args_rec(algo_info, arg, &arg_count);
+  if (arg_count != algo_info->nb_param) {
+    char message[256];
+    snprintf(message, sizeof(message),
+             "Erreur d'appel : nombre d'arguments invalide pour '%s' "
+             "(attendu : %d, obtenu : %d)",
+             func_name, algo_info->nb_param, arg_count);
+    yyerror(message);
+    exit(EXIT_FAILURE);
+  }
+
   ASTNode *node = create_node(NODE_CALL);
   if (node == nullptr) {
     return nullptr;
@@ -266,8 +432,13 @@ ASTNode *make_return(ASTNode *expr) {
     if (current_algo->type == UNDEF) {
       current_algo->type = expr->expr_type; // Inférence du type
     } else if (current_algo->type != expr->expr_type) {
-      yyerror("Erreur de type : Le type de retour ne correspond pas aux "
-              "retours précédents");
+      char message[256];
+      snprintf(message, sizeof(message),
+               "Erreur de type : retour incohérent dans '%s' (attendu : %s, "
+               "obtenu : %s)",
+               current_algo->id, type_to_string(current_algo->type),
+               type_to_string(expr->expr_type));
+      yyerror(message);
       exit(EXIT_FAILURE);
     }
   }
@@ -313,8 +484,10 @@ ASTNode *make_false() {
 }
 
 ASTNode *make_if(ASTNode *condition, ASTNode *if_block, ASTNode *else_block) {
+  force_type(condition, BOOL_T);
   if (condition->expr_type != BOOL_T) {
-    yyerror("Erreur de type : La condition du IF doit être un booléen");
+    yyerror_unary_type("La condition du IF doit être booléenne", condition,
+                       BOOL_T);
     exit(EXIT_FAILURE);
   }
 
@@ -330,9 +503,33 @@ ASTNode *make_if(ASTNode *condition, ASTNode *if_block, ASTNode *else_block) {
   return node;
 }
 
+void ensure_fori_var_int(const char *var_name) {
+  info_var *fori_var = symboletable_get_var(var_name);
+  if (fori_var == nullptr) {
+    if (symboletable_add_varloc(var_name, INT_T) == nullptr) {
+      yyerror("Erreur interne : Impossible d'ajouter la variable de boucle");
+      exit(EXIT_FAILURE);
+    }
+    return;
+  }
+
+  if (fori_var->type == UNDEF) {
+    fori_var->type = INT_T;
+  } else if (fori_var->type != INT_T) {
+    char message[256];
+    snprintf(message, sizeof(message),
+             "Erreur de type : La variable de boucle '%s' doit être un entier",
+             var_name);
+    yyerror(message);
+    exit(EXIT_FAILURE);
+  }
+}
+
 ASTNode *make_dowhile(ASTNode *condition, ASTNode *body) {
+  force_type(condition, BOOL_T);
   if (condition->expr_type != BOOL_T) {
-    yyerror("Erreur de type : La condition du WHILE doit être un booléen");
+    yyerror_unary_type("La condition du WHILE doit être booléenne", condition,
+                       BOOL_T);
     exit(EXIT_FAILURE);
   }
 
@@ -349,8 +546,11 @@ ASTNode *make_dowhile(ASTNode *condition, ASTNode *body) {
 
 ASTNode *make_fori(char *var_name, ASTNode *start_expr, ASTNode *end_expr,
                    ASTNode *body) {
+  force_type(start_expr, INT_T);
+  force_type(end_expr, INT_T);
   if (start_expr->expr_type != INT_T || end_expr->expr_type != INT_T) {
-    yyerror("Erreur de type : Les bornes du FORI doivent être des entiers");
+    yyerror_binary_types("Les bornes du FORI doivent être entières", start_expr,
+                         end_expr, "entier .. entier");
     exit(EXIT_FAILURE);
   }
 

@@ -106,13 +106,14 @@ SETER:
 //----------------------------------------------------------------------------//
 LOOP_FOR_I:
   FORI '{' ID '}' '{' EXPR '}' '{' EXPR '}'
+    { ensure_fori_var_int($3); }
     LINSTRU
   OD {
     // $3 = ID (le nom de la variable)
     // $6 = EXPR (la borne de départ)
     // $9 = EXPR (la borne de fin)
-    // $11 = LINSTRU (le corps de la boucle)
-    $$ = make_fori($3, $6, $9, $11);
+    // $12 = LINSTRU (le corps de la boucle)
+    $$ = make_fori($3, $6, $9, $12);
   };
 
 //---- [BOULCE FORI ] --------------------------------------------------------//
