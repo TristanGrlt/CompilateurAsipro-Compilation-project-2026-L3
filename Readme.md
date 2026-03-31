@@ -60,3 +60,5 @@ Ce fichier contient aussi la fonction `get_label()`, qui permet de générer un 
 - La vérification des types lors des opérations.
 - L’inférence des types non définis.
 - La vérification des types des paramètres.
+- Optimisations optionel :
+  - Calcule à la compilation d'opérations entres constante.

@@ -184,6 +184,14 @@ ASTNode *make_add(ASTNode *left, ASTNode *right) {
     yyerror_binary_types("Addition", left, right, "entier + entier");
     exit(EXIT_FAILURE);
   }
+
+  if (left->type == NODE_CONST && right->type == NODE_CONST) {
+    int val = left->val + right->val;
+    free_ast(left);
+    free_ast(right);
+    return make_const(val);
+  }
+
   ASTNode *node = create_node(NODE_ADD);
   if (node == nullptr) {
     return nullptr;
@@ -201,6 +209,14 @@ ASTNode *make_sub(ASTNode *left, ASTNode *right) {
     yyerror_binary_types("Soustraction", left, right, "entier - entier");
     exit(EXIT_FAILURE);
   }
+
+  if (left->type == NODE_CONST && right->type == NODE_CONST) {
+    int val = left->val - right->val;
+    free_ast(left);
+    free_ast(right);
+    return make_const(val);
+  }
+
   ASTNode *node = create_node(NODE_SUB);
   if (node == nullptr) {
     return nullptr;
@@ -218,6 +234,14 @@ ASTNode *make_mul(ASTNode *left, ASTNode *right) {
     yyerror_binary_types("Multiplication", left, right, "entier * entier");
     exit(EXIT_FAILURE);
   }
+
+  if (left->type == NODE_CONST && right->type == NODE_CONST) {
+    int val = left->val * right->val;
+    free_ast(left);
+    free_ast(right);
+    return make_const(val);
+  }
+
   ASTNode *node = create_node(NODE_MUL);
   if (node == nullptr) {
     return nullptr;
@@ -235,6 +259,18 @@ ASTNode *make_div(ASTNode *left, ASTNode *right) {
     yyerror_binary_types("Division", left, right, "entier / entier");
     exit(EXIT_FAILURE);
   }
+
+  if (left->type == NODE_CONST && right->type == NODE_CONST) {
+    if (right->val == 0) {
+      yyerror("Erreur de compilation : Division par zéro détectée !");
+      exit(EXIT_FAILURE);
+    }
+    int val = left->val / right->val;
+    free_ast(left);
+    free_ast(right);
+    return make_const(val);
+  }
+
   ASTNode *node = create_node(NODE_DIV);
   if (node == nullptr) {
     return nullptr;
@@ -252,6 +288,14 @@ ASTNode *make_lt(ASTNode *left, ASTNode *right) {
     yyerror_binary_types("Comparaison '<'", left, right, "entier < entier");
     exit(EXIT_FAILURE);
   }
+
+  if (left->type == NODE_CONST && right->type == NODE_CONST) {
+    int verified = (left->val < right->val);
+    free_ast(left);
+    free_ast(right);
+    return verified ? make_true() : make_false();
+  }
+
   ASTNode *node = create_node(NODE_LT);
   if (node == nullptr) {
     return nullptr;
@@ -269,6 +313,14 @@ ASTNode *make_gt(ASTNode *left, ASTNode *right) {
     yyerror_binary_types("Comparaison '>'", left, right, "entier > entier");
     exit(EXIT_FAILURE);
   }
+
+  if (left->type == NODE_CONST && right->type == NODE_CONST) {
+    int verified = (left->val > right->val);
+    free_ast(left);
+    free_ast(right);
+    return verified ? make_true() : make_false();
+  }
+
   ASTNode *node = create_node(NODE_GT);
   if (node == nullptr) {
     return nullptr;
@@ -286,6 +338,14 @@ ASTNode *make_geq(ASTNode *left, ASTNode *right) {
     yyerror_binary_types("Comparaison '>='", left, right, "entier >= entier");
     exit(EXIT_FAILURE);
   }
+
+  if (left->type == NODE_CONST && right->type == NODE_CONST) {
+    int verified = (left->val >= right->val);
+    free_ast(left);
+    free_ast(right);
+    return verified ? make_true() : make_false();
+  }
+
   ASTNode *node = create_node(NODE_GEQ);
   if (node == nullptr) {
     return nullptr;
@@ -303,6 +363,14 @@ ASTNode *make_leq(ASTNode *left, ASTNode *right) {
     yyerror_binary_types("Comparaison '<='", left, right, "entier <= entier");
     exit(EXIT_FAILURE);
   }
+
+  if (left->type == NODE_CONST && right->type == NODE_CONST) {
+    int verified = (left->val <= right->val);
+    free_ast(left);
+    free_ast(right);
+    return verified ? make_true() : make_false();
+  }
+
   ASTNode *node = create_node(NODE_LEQ);
   if (node == nullptr) {
     return nullptr;
@@ -327,6 +395,14 @@ ASTNode *make_eq(ASTNode *left, ASTNode *right) {
                          "même type des deux côtés");
     exit(EXIT_FAILURE);
   }
+
+  if (left->type == NODE_CONST && right->type == NODE_CONST) {
+    int verified = (left->val == right->val);
+    free_ast(left);
+    free_ast(right);
+    return verified ? make_true() : make_false();
+  }
+
   ASTNode *node = create_node(NODE_EQ);
   if (node == nullptr) {
     return nullptr;
