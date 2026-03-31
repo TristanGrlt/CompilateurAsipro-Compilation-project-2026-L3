@@ -802,6 +802,10 @@ void generate_asm(ASTNode *node) {
     break;
   case NODE_PROGRAM:
     _("PROGRAMME");
+    label("msgtrue");
+    printf("@string \"true\\n\"\n");
+    label("msgfalse");
+    printf("@string \"false\\n\"\n");
     if (node->left != nullptr) {
       generate_asm(node->left);
     }
@@ -812,7 +816,29 @@ void generate_asm(ASTNode *node) {
     sub(sp, ax);
     if (node->right != nullptr) {
       generate_asm(node->right);
+      if (node->right->expr_type == BOOL_T) {
+        cp(ax, sp);
+        loadw(bx, ax);
+        const_int(cx, 0);
+        const_string(dx, "print_false");
+        cmp(bx, cx);
+        jmpc(dx);
+
+        const_string(ax, "msgtrue");
+        callprintfs(ax);
+        const_string(dx, "end_print_bool");
+        jmp(dx);
+
+        label("print_false");
+        const_string(ax, "msgfalse");
+        callprintfs(ax);
+        label("end_print_bool");
+      } else {
+        cp(ax, sp);
+        callprintfd(ax);
+      }
     }
+
     break;
   default:
     break;

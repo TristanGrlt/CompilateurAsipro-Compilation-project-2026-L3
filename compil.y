@@ -210,9 +210,9 @@ int main() {
 
     generate_asm(ast_root);
 
-    printf(";;;;;;;;;;  AFFICHAGE  ;;;;;;;;;;\n");
-    printf("\tcp ax,sp\n");
-    printf("\tcallprintfd ax\n");
+    // printf(";;;;;;;;;;  AFFICHAGE  ;;;;;;;;;;\n");
+    // printf("\tcp ax,sp\n");
+    // printf("\tcallprintfd ax\n");
     printf("\tend\n");
     printf(":stack\n");
     printf("@int 0\n");
