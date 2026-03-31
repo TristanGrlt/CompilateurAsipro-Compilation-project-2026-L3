@@ -192,6 +192,15 @@ ASTNode *make_add(ASTNode *left, ASTNode *right) {
     return make_const(val);
   }
 
+  if (right->type == NODE_CONST && right->val == 0) {
+    free_ast(right);
+    return left;
+  }
+  if (left->type == NODE_CONST && left->val == 0) {
+    free_ast(left);
+    return right;
+  }
+
   ASTNode *node = create_node(NODE_ADD);
   if (node == nullptr) {
     return nullptr;
@@ -217,6 +226,11 @@ ASTNode *make_sub(ASTNode *left, ASTNode *right) {
     return make_const(val);
   }
 
+  if (right->type == NODE_CONST && right->val == 0) {
+    free_ast(right);
+    return left;
+  }
+
   ASTNode *node = create_node(NODE_SUB);
   if (node == nullptr) {
     return nullptr;
@@ -240,6 +254,23 @@ ASTNode *make_mul(ASTNode *left, ASTNode *right) {
     free_ast(left);
     free_ast(right);
     return make_const(val);
+  }
+
+  if (right->type == NODE_CONST && right->val == 1) {
+    free_ast(right);
+    return left;
+  }
+  if (left->type == NODE_CONST && left->val == 1) {
+    free_ast(left);
+    return right;
+  }
+  if (right->type == NODE_CONST && right->val == 0) {
+    free_ast(left);
+    return right;
+  }
+  if (left->type == NODE_CONST && left->val == 0) {
+    free_ast(right);
+    return left;
   }
 
   ASTNode *node = create_node(NODE_MUL);
@@ -269,6 +300,11 @@ ASTNode *make_div(ASTNode *left, ASTNode *right) {
     free_ast(left);
     free_ast(right);
     return make_const(val);
+  }
+
+  if (right->type == NODE_CONST && right->val == 1) {
+    free_ast(right);
+    return left;
   }
 
   ASTNode *node = create_node(NODE_DIV);
