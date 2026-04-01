@@ -97,6 +97,21 @@ static void validate_call_args_rec(info_algo *algo_info, ASTNode *arg,
   (*arg_index)++;
 }
 
+static int is_terminal(ASTNode *node) {
+  if (node == nullptr)
+    return 0;
+  if (node->type == NODE_RETURN) {
+    return 1;
+  }
+  if (node->type == NODE_SEQ) {
+    return is_terminal(node->left) || is_terminal(node->right);
+  }
+  if (node->type == NODE_IF) {
+    return is_terminal(node->middle) && is_terminal(node->right);
+  }
+  return 0;
+}
+
 ASTNode *create_node(NodeType type) {
   ASTNode *node = calloc(1, sizeof(ASTNode));
   if (node == nullptr) {
@@ -600,10 +615,18 @@ ASTNode *make_seq(ASTNode *left, ASTNode *right) {
   if (left == nullptr) {
     return right;
   }
-  ASTNode *node = create_node(NODE_SEQ);
-  if (node == nullptr) {
-    return nullptr;
+  if (right == nullptr) {
+    return left;
   }
+
+  if (is_terminal(left)) {
+    free_ast(right);
+    return left;
+  }
+
+  ASTNode *node = create_node(NODE_SEQ);
+  if (node == nullptr)
+    return nullptr;
   node->left = left;
   node->right = right;
   return node;
@@ -635,11 +658,21 @@ ASTNode *make_if(ASTNode *condition, ASTNode *if_block, ASTNode *else_block) {
     exit(EXIT_FAILURE);
   }
 
+  if (condition->type == NODE_TRUE) {
+    free_ast(condition);
+    free_ast(else_block);
+    return if_block;
+  }
+  if (condition->type == NODE_FALSE) {
+    free_ast(condition);
+    free_ast(if_block);
+    return else_block;
+  }
+
   ASTNode *node = create_node(NODE_IF);
   if (node == nullptr) {
     return nullptr;
   }
-
   node->left = condition;
   node->middle = if_block;
   node->right = else_block;
@@ -677,11 +710,16 @@ ASTNode *make_dowhile(ASTNode *condition, ASTNode *body) {
     exit(EXIT_FAILURE);
   }
 
+  if (condition->type == NODE_FALSE) {
+    free_ast(condition);
+    free_ast(body);
+    return nullptr;
+  }
+
   ASTNode *node = create_node(NODE_DOWHILE);
   if (node == nullptr) {
     return nullptr;
   }
-
   node->left = condition;
   node->right = body;
 

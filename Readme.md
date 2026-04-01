@@ -64,3 +64,5 @@ Ce fichier contient aussi la fonction `get_label()`, qui permet de générer un 
   - Calcule à la compilation du résultat d'opérations entres constante (Pliage de Constantes).
   - Simplification arithmétique (x + 0, x \* 1, etc)
   - Simplification des multiplications par des puissance 2 avec des décalage de bits
+  - optimisation du code mort avec
+    - supression des bloc conditionel (if, while, etc) si on connait déja l'évaluation de la condition
