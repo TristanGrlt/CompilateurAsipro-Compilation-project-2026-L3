@@ -24,6 +24,7 @@ typedef enum {
   NODE_ALGO,   // (begin{algo})
   NODE_SEQ,    // (le bloc de code)
   NODE_IF,
+  NODE_SHIFTL,
   NODE_DOWHILE,
 } NodeType;
 

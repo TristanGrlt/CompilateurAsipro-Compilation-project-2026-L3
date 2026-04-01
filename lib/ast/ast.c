@@ -177,6 +177,17 @@ static void force_type(ASTNode *node, type_s exp_type) {
 
 // Opération :
 
+static int is_power_of_two(int x) { return x > 0 && (x & (x - 1)) == 0; }
+
+static int get_shift_amount(int x) {
+  int k = 0;
+  while (x > 1) {
+    x >>= 1;
+    k++;
+  }
+  return k;
+}
+
 ASTNode *make_add(ASTNode *left, ASTNode *right) {
   force_type(left, INT_T);
   force_type(right, INT_T);
@@ -271,6 +282,27 @@ ASTNode *make_mul(ASTNode *left, ASTNode *right) {
   if (left->type == NODE_CONST && left->val == 0) {
     free_ast(right);
     return left;
+  }
+
+  if (right->type == NODE_CONST && is_power_of_two(right->val)) {
+    ASTNode *node = create_node(NODE_SHIFTL);
+    if (node != nullptr) {
+      node->left = left;
+      node->val = get_shift_amount(right->val);
+      node->expr_type = INT_T;
+      free_ast(right);
+      return node;
+    }
+  }
+  if (left->type == NODE_CONST && is_power_of_two(left->val)) {
+    ASTNode *node = create_node(NODE_SHIFTL);
+    if (node != nullptr) {
+      node->left = right;
+      node->val = get_shift_amount(left->val);
+      node->expr_type = INT_T;
+      free_ast(left);
+      return node;
+    }
   }
 
   ASTNode *node = create_node(NODE_MUL);
@@ -786,6 +818,10 @@ void generate_asm(ASTNode *node) {
 
     free(l_else);
     free(l_end2);
+    break;
+  case NODE_SHIFTL:
+    generate_asm(node->left);
+    asm_shiftl(node->val);
     break;
   case NODE_ADD:
     generate_asm(node->left);

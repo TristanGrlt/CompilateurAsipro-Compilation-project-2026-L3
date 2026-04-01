@@ -152,6 +152,15 @@ void asm_eq(void) {
   free(end_eq);
 }
 
+void asm_shiftl(int k) {
+  _("MULTIPLICATION OPTIMISEE (SHIFTL)");
+  pop(ax);
+  for (int i = 0; i < k; i++) {
+    printf("\tshiftl ax\n");
+  }
+  push(ax);
+}
+
 void asm_start_algo(ASTNode *node) {
   _("CONFIGURATION ALGO");
   label(node->name);
