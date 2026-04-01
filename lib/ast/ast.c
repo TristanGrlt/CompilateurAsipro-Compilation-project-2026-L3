@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define LIMIT_LOOP 30
+
 extern void yyerror(const char *s);
 
 static const char *type_to_string(type_s type) {
@@ -37,6 +39,15 @@ static void yyerror_unary_type(const char *context, ASTNode *node,
            "Erreur de type : %s (attendu : %s, obtenu : %s)", context,
            type_to_string(expected), type_to_string(node->expr_type));
   yyerror(message);
+}
+
+ASTNode *create_node(NodeType type) {
+  ASTNode *node = calloc(1, sizeof(ASTNode));
+  if (node == nullptr) {
+    return nullptr;
+  }
+  node->type = type;
+  return node;
 }
 
 static void sync_param_type_if_needed(info_var *var) {
@@ -112,13 +123,30 @@ static int is_terminal(ASTNode *node) {
   return 0;
 }
 
-ASTNode *create_node(NodeType type) {
-  ASTNode *node = calloc(1, sizeof(ASTNode));
+static ASTNode *clone_ast(ASTNode *node) {
   if (node == nullptr) {
     return nullptr;
   }
-  node->type = type;
-  return node;
+  ASTNode *copy = create_node(node->type);
+  if (copy == nullptr) {
+    return nullptr;
+  }
+
+  copy->val = node->val;
+  copy->expr_type = node->expr_type;
+
+  if (node->type == NODE_VAR || node->type == NODE_CALL ||
+      node->type == NODE_ALGO || node->type == NODE_SET) {
+    if (node->name != nullptr) {
+      copy->name = strdup(node->name);
+    }
+  }
+
+  copy->left = clone_ast(node->left);
+  copy->middle = clone_ast(node->middle);
+  copy->right = clone_ast(node->right);
+
+  return copy;
 }
 
 ASTNode *make_programe(ASTNode *algos, ASTNode *main_call) {
@@ -734,6 +762,36 @@ ASTNode *make_fori(char *var_name, ASTNode *start_expr, ASTNode *end_expr,
     yyerror_binary_types("Les bornes du FORI doivent être entières", start_expr,
                          end_expr, "entier .. entier");
     exit(EXIT_FAILURE);
+  }
+
+  if (start_expr->type == NODE_CONST && end_expr->type == NODE_CONST) {
+    int start = start_expr->val;
+    int end = end_expr->val;
+    int iterations = end - start + 1;
+
+    if (iterations <= 0) {
+      free_ast(start_expr);
+      free_ast(end_expr);
+      free_ast(body);
+      free(var_name);
+      return nullptr;
+    }
+
+    if (iterations <= LIMIT_LOOP) {
+      ASTNode *unrolled_seq = nullptr;
+      for (int i = start; i <= end; i++) {
+        ASTNode *set_iter = make_set(strdup(var_name), make_const(i));
+        ASTNode *body_clone = clone_ast(body);
+        ASTNode *step_seq = make_seq(set_iter, body_clone);
+        unrolled_seq = make_seq(unrolled_seq, step_seq);
+      }
+      free_ast(start_expr);
+      free_ast(end_expr);
+      free_ast(body);
+      free(var_name);
+
+      return unrolled_seq;
+    }
   }
 
   ASTNode *init = make_set(var_name, start_expr);

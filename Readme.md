@@ -67,3 +67,4 @@ Ce fichier contient aussi la fonction `get_label()`, qui permet de générer un 
   - optimisation du code mort avec :
     - supression des bloc conditionel (if, while, etc) si on connait déja l'évaluation de la condition.
     - supression des allocations d'ont les variables ne sont pas lue.
+    - Les boulces fori qui boucle moins de `LIMIT_LOOP` ont leur corps dépuliqué le nombre de tout de boucle pour éviter les saut conditionel.

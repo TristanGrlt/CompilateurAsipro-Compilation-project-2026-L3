@@ -26,7 +26,7 @@ typedef struct {
   char *id; // id unique de la variable
   int nb; // numéro d'arrivé de la variable dans l'algorithme celon sont type
   type_s type; // type de la variable
-  int used
+  int used;
 } info_var;
 
 #endif
