@@ -91,6 +91,7 @@ void *symboletable_add_param(const char *id, type_s type) {
   var->id = strdup(id);
   var->nb = param_index;
   var->type = type;
+  var->used = 0;
   void *r = hashtable_add(current_algo->param, var->id, var);
   if (r != var) {
     free(var->id);
@@ -119,6 +120,7 @@ void *symboletable_add_varloc(const char *id, type_s type) {
   var->id = strdup(id);
   var->nb = ++current_algo->nb_varloc;
   var->type = type;
+  var->used = 0;
   void *r = hashtable_add(current_algo->varloc, var->id, var);
   if (r != var) {
     free(var->id);

@@ -159,8 +159,8 @@ ASTNode *make_var(char *name) {
     yyerror(message);
     exit(EXIT_FAILURE);
   }
+  var->used++;
   node->expr_type = var->type;
-
   return node;
 }
 
@@ -781,26 +781,36 @@ void generate_asm(ASTNode *node) {
   switch (node->type) {
 
   case NODE_SET: {
-    _("SET");
-    generate_asm(node->left);
     info_var *var_loc2 = symboletable_get_var_loc(node->name);
     info_algo *al2 = symboletable_get_current();
+    info_var *var_param = NULL;
 
     if (var_loc2 == nullptr) {
-      info_var *var_param = symboletable_get_var_param(node->name);
+      var_param = symboletable_get_var_param(node->name);
       if (var_param == nullptr) {
         yyerror("Variable non reconnue");
         exit(EXIT_FAILURE);
       }
+    }
+
+    int is_used = (var_loc2 != nullptr) ? var_loc2->used : var_param->used;
+
+    if (is_used == 0) {
+      break;
+    }
+
+    _("SET");
+    generate_asm(node->left);
+
+    if (var_loc2 == nullptr) {
       _("Stockage valeur dans le paramètre");
-      asm_compute_var_addr(al2->nb_param - var_param->nb,
-                           cx); // Formule Paramètre
+      asm_compute_var_addr(al2->nb_param - var_param->nb, cx);
       pop(ax);
       storew(ax, cx);
     } else {
       _("Stockage valeur dans la variable locale");
       asm_compute_var_addr(al2->nb_param + al2->nb_varloc - var_loc2->nb + 1,
-                           cx); // Formule Locale
+                           cx);
       pop(ax);
       storew(ax, cx);
     }

@@ -26,56 +26,7 @@ typedef struct {
   char *id; // id unique de la variable
   int nb; // numéro d'arrivé de la variable dans l'algorithme celon sont type
   type_s type; // type de la variable
+  int used
 } info_var;
 
 #endif
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-// A ajouter dans le table de hashage
-// type de retour
-// id
-// nb_param
-// nb_variable_locales
-// param :
-//      id
-//      numéro d'arrivé
-//      type
-// varable local :
-//    id
-//    numéro d'arrivé
-//    type
-
-// la clé est id et les valeurs param et variable local peuvent être tableau ou
-// une autre table de hashage.
-
-// Modification ajoute de hashtable (Algo 3)
