@@ -4,7 +4,7 @@ Tristan Groult, Louis Guerain
 
 ## Flex
 
-Définition de tous les mots-clef du langage et de leur conversion en tokens pour être transmis à Bison.
+Définition de tous les mots-clés du langage et de leur conversion en tokens pour être transmis à Bison.
 
 ## Bison
 
@@ -20,7 +20,7 @@ Un AST est un arbre contenant des nœuds de différents types, qui permet de sau
 
 Pour cette implémentation, nous avons choisi un AST ternaire avec les champs `left`, `right` et `center`. La plupart des instructions sauvegardées ne nécessitent que les deux premiers champs. Dans notre projet, seule l’instruction `\IF` nécessite un arbre ternaire, car elle doit contenir une référence vers la condition, les instructions dans le corps du bloc et, finalement, celles du bloc `\ELSE`.
 
-#### Table des symbole
+#### Table des symboles
 
 Durant le remplissage de l’AST, nous alimentons également une table des symboles, qui est une table de hachage contenant les algorithmes. Elle possède les champs suivants :
 
@@ -31,8 +31,8 @@ typedef struct {
   int nb_param;        // nombre de paramètres
   int nb_varloc;       // nombre de variables locales
   type_s *param_types; // types des paramètres dans l'ordre de déclaration
-  hashtable *param;    // table de hashage des paramètres
-  hashtable *varloc;   // table de hashage des variables locales
+  hashtable *param;    // table de hachage des paramètres
+  hashtable *varloc;   // table de hachage des variables locales
 } info_algo;
 
 typedef struct {
@@ -50,21 +50,25 @@ Maintenant que notre arbre représente une vue d’ensemble de notre code, nous 
 
 ## asm
 
-Les fichiers `asm.c` et `asm.h` contiennent une grande partie du code assembleur généré, afin d’améliorer la lisibilité du compilateur. De plus, nous avons défini de nombreuses macros. Dans un premier temps, nous avons défini chaque nom de registre comme une macro équivalente à sa représentation sous forme de chaîne de caractères. Pour toutes les instructions assembleur utilisées dans ce compilateur, nous avons associé une macro-fonction portant leur nom et attendant en entrée le même nombre de registres que la réelle instruction assembleur. Cela évite un très grand nombre d’écritures via une fonction et améliore grandement la lisibilité.
+Les fichiers `asm.c` et `asm.h` contiennent une grande partie du code assembleur généré, afin d’améliorer la lisibilité du compilateur. De plus, nous avons défini de nombreuses macros. Dans un premier temps, nous avons défini chaque nom de registre comme une macro équivalente à sa représentation sous forme de chaîne de caractères. Pour toutes les instructions assembleur utilisées dans ce compilateur, nous avons associé une macro-fonction portant leur nom et attendant en entrée le même nombre de registres que l’instruction assembleur réelle. Cela évite un très grand nombre d’écritures via une fonction et améliore grandement la lisibilité.
 
-Ce fichier contient aussi la fonction `get_label()`, qui permet de générer un label assembleur unique en le sufixant avec un entier.
+Ce fichier contient aussi la fonction `get_label()`, qui permet de générer un label assembleur unique en le suffixant avec un entier.
 
 ## Fonctionnalités implémentées
 
+- Plusieurs algorithmes possible.
 - La possibilité de faire des appels récursifs.
+- Inmplémentation des conditionnel
+- Inmplémentation des
 - La vérification des types lors des opérations.
 - L’inférence des types non définis.
 - La vérification des types des paramètres.
-- Optimisations optionel :
-  - Calcule à la compilation du résultat d'opérations entres constante (Pliage de Constantes).
-  - Simplification arithmétique (x + 0, x \* 1, etc).
-  - Simplification des multiplications par des puissance 2 avec des décalage de bits.
-  - optimisation du code mort avec :
-    - supression des bloc conditionel (if, while, etc) si on connait déja l'évaluation de la condition.
-    - supression des allocations d'ont les variables ne sont pas lue.
-    - Les boulces fori qui boucle moins de `LIMIT_LOOP` ont leur corps dépuliqué le nombre de tout de boucle pour éviter les saut conditionel.
+- Le compilateur s'assure qu'un algorithme retourne quelque chose dans tous les cas.
+- Optimisations optionnelles :
+  - Calcul à la compilation du résultat d'opérations entre constantes (pliage de constantes).
+  - Simplification arithmétique (x + 0, x \* 1, etc.).
+  - Simplification des multiplications par des puissances de 2 avec des décalages de bits.
+  - Optimisation du code mort avec :
+    - Suppression des blocs conditionnels (`if`, `while`, etc.) si on connaît déjà l'évaluation de la condition.
+    - Suppression des allocations dont les variables ne sont pas lues.
+    - Les boucles `fori` qui bouclent moins de `LIMIT_LOOP` ont leur corps dupliqué le nombre de tours de boucle pour éviter les sauts conditionnels.

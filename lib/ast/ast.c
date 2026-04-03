@@ -41,6 +41,33 @@ static void yyerror_unary_type(const char *context, ASTNode *node,
   yyerror(message);
 }
 
+static void force_type(ASTNode *node, type_s exp_type);
+
+bool has_guaranteed_return(ASTNode *node) {
+  if (node == nullptr) {
+    return false;
+  }
+
+  switch (node->type) {
+  case NODE_RETURN:
+    return true;
+
+  case NODE_SEQ:
+    return has_guaranteed_return(node->left) ||
+           has_guaranteed_return(node->right);
+
+  case NODE_IF:
+    if (node->right == nullptr) {
+      return false;
+    }
+    return has_guaranteed_return(node->middle) &&
+           has_guaranteed_return(node->right);
+
+  default:
+    return false;
+  }
+}
+
 ASTNode *create_node(NodeType type) {
   ASTNode *node = calloc(1, sizeof(ASTNode));
   if (node == nullptr) {
@@ -94,15 +121,20 @@ static void validate_call_args_rec(info_algo *algo_info, ASTNode *arg,
     if (algo_info->param_types != nullptr) {
       algo_info->param_types[*arg_index] = arg->expr_type;
     }
-  } else if (arg->expr_type != expected_type) {
-    char message[256];
-    snprintf(message, sizeof(message),
-             "Erreur d'appel : type invalide pour l'argument %d de '%s' "
-             "(attendu : %s, obtenu : %s)",
-             *arg_index + 1, algo_info->id, type_to_string(expected_type),
-             type_to_string(arg->expr_type));
-    yyerror(message);
-    exit(EXIT_FAILURE);
+  } else {
+    if (arg->expr_type == UNDEF) {
+      force_type(arg, expected_type);
+    }
+    if (arg->expr_type != expected_type) {
+      char message[256];
+      snprintf(message, sizeof(message),
+               "Erreur d'appel : type invalide pour l'argument %d de '%s' "
+               "(attendu : %s, obtenu : %s)",
+               *arg_index + 1, algo_info->id, type_to_string(expected_type),
+               type_to_string(arg->expr_type));
+      yyerror(message);
+      exit(EXIT_FAILURE);
+    }
   }
 
   (*arg_index)++;
@@ -563,6 +595,15 @@ ASTNode *make_set(char *var_name, ASTNode *expr) {
 }
 
 ASTNode *make_algo(char *name, ASTNode *params, ASTNode *body) {
+  if (!has_guaranteed_return(body)) {
+    char message[256];
+    snprintf(message, sizeof(message),
+             "Erreur sémantique : L'algorithme '%s' ne garantit pas de RETURN "
+             "dans tous ses chemins d'exécution",
+             name);
+    yyerror(message);
+    exit(EXIT_FAILURE);
+  }
   ASTNode *node = create_node(NODE_ALGO);
   if (node == nullptr) {
     return nullptr;
